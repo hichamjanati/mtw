@@ -6,16 +6,9 @@ Wasserestein regularized Multi-task regression.
 Given high dimensional regression datasets :math:`(X^t, y^t) t = 1\dotsT` , MTW solves
 the optimization problem:
 
-.. math::
+|eq1|
 
-     \min_{\substack{\theta^1, \dots, \theta^T \\ \bar{theta} \in \bbR^p} } \frac{1}{2n} \sum_{t=1}^T{\| X^t \theta^t - Y^t \|^2}  +  H(\theta^1, \dots,  \theta^T; \bar{theta})
-
-where:
-
-.. math::
-
-    H(\theta^1, \dots,  \theta^T; \bar{theta})  = \frac{\mu}{T} \overbrace{ \sum_{t=1}^{T} \Delta(\theta^t, \bar{theta})}^{ \text{supports proximity}}  +  \frac{\lambda}{T} \overbrace{ \sum_{t=1}^T \|\theta^t\|_1}^{\text{sparsity}}
-    \Delta(\theta^t, \bar{theta}) = W(\theta_+^t, \bar{theta}_+)  + W(\theta_-^t, \bar{theta}_-)
+where: |eq2|
 
 and W the unbalanced Wasserstein distance.
 
@@ -59,3 +52,6 @@ If you use this code, please cite:
     }
 
 ArXiv link: https://arxiv.org/abs/1805.07833
+
+.. |eq1| image:: https://latex.codecogs.com/gif.latex?\min_{\substack{\theta^1,&space;\dots,&space;\theta^T&space;\\&space;\bar{\theta}&space;\in&space;\mathbb{R}^p}&space;}&space;\frac{1}{2n}&space;\sum_{t=1}^T{\|&space;X^t&space;\theta^t&space;-&space;Y^t&space;\|^2}&space;&plus;&space;H(\theta^1,&space;\dots,&space;\theta^T;&space;\bar{\theta})
+.. |eq2| image:: https://latex.codecogs.com/gif.latex?\min_{\substack{\theta^1,&space;\dots,&space;\theta^T&space;\\&space;\bar{\theta}&space;\in&space;\mathbb{R}^p}&space;}&space;\frac{1}{2n}&space;\sum_{t=1}^T{\|&space;X^t&space;\theta^t&space;-&space;Y^t&space;\|^2}&space;&plus;&space;H(\theta^1,&space;\dots,&space;\theta^T;&space;\bar{\theta})
