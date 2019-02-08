@@ -3,6 +3,7 @@ name: mtw-env
 
 dependencies:
     - ipython
+    - joblib>=0.12.5
     - numpy>=1.12
     - seaborn>=0.7
     - scipy>=0.18.0
