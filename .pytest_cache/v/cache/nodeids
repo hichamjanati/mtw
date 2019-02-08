@@ -1,0 +1,7 @@
+[
+  "smtr/tests/test_dirty.py::test_dirty_vs_sklearn",
+  "smtr/tests/test_dirty.py::test_dirty_best_score",
+  "smtr/tests/test_mtw.py::test_mtw_warmstart",
+  "smtr/tests/test_stl.py::test_stl_all_zero",
+  "smtr/tests/test_stl.py::test_stl_vs_sklearn"
+]
