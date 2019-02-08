@@ -3,13 +3,12 @@ Multi-task Wasserstein (mtw)
 
 Wasserestein regularized Multi-task regression.
 
-Given high dimensional regression datasets :math:`(X^t, y^t) t = 1..T`, MTW solves
+Given high dimensional regression datasets :math:`(X^t, y^t) t = 1\dotsT` , MTW solves
 the optimization problem:
 
 .. math::
 
      \min_{\substack{\theta^1, \dots, \theta^T \\ \bar{theta} \in \bbR^p} } \frac{1}{2n} \sum_{t=1}^T{\| X^t \theta^t - Y^t \|^2}  +  H(\theta^1, \dots,  \theta^T; \bar{theta})
-
 
 where:
 
@@ -17,7 +16,6 @@ where:
 
     H(\theta^1, \dots,  \theta^T; \bar{theta})  = \frac{\mu}{T} \overbrace{ \sum_{t=1}^{T} \Delta(\theta^t, \bar{theta})}^{ \text{supports proximity}}  +  \frac{\lambda}{T} \overbrace{ \sum_{t=1}^T \|\theta^t\|_1}^{\text{sparsity}}
     \Delta(\theta^t, \bar{theta}) = W(\theta_+^t, \bar{theta}_+)  + W(\theta_-^t, \bar{theta}_-)
-
 
 and W the unbalanced Wasserstein distance.
 
