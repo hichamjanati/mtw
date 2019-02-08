@@ -16,17 +16,17 @@ with
 
 |eq3|
 
-and W the Unbalanced KL Wasserstein distance.
+ where W is the Unbalanced KL Wasserstein distance.
 
 Install the development version
 ===============================
 
-From a console or terminal clone the repository and install CELER:
+From a console or terminal clone the repository and install MTW:
 
 ::
 
     git clone https://github.com/hichamjanati/mtw.git
-    cd celer/
+    cd mtw/
     conda env create --file environment.yml
     source activate mtw-env
     pip install --no-deps -e .
