@@ -11,7 +11,7 @@ def readme():
 extensions = [
     Extension(
         "mtw.solver_cd",
-        ['mtw.solver_cd.pyx'],
+        ['mtw/solver_cd.pyx'],
     ),
 ]
 
