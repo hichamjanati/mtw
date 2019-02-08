@@ -10,8 +10,8 @@ def readme():
 
 extensions = [
     Extension(
-        "mtw.estimators.solvers.solver_cd",
-        ['mtw/estimators/solvers/solver_cd.pyx'],
+        "mtw.solver_cd",
+        ['mtw.solver_cd.pyx'],
     ),
 ]
 
