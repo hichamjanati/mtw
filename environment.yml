@@ -1,3 +1,6 @@
+name: mtw-env
+
+
 dependencies:
     - ipython
     - numpy>=1.12
