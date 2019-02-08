@@ -1,7 +1,7 @@
 Multi-task Wasserstein (mtw)
 ============================
 
-Wasserestein regularized Multi-task regression.
+Wasserestein regularization for sparse Multi-task regression.
 
 Given high dimensional regression datasets :math:`(X^t, y^t) t = 1..T` , MTW solves
 the optimization problem:
@@ -10,18 +10,23 @@ the optimization problem:
 
 where:
 
-|eq2| with |eq3|
+|eq2|
 
-and W the unbalanced Wasserstein distance.
+with
+
+|eq3|
+
+and W the Unbalanced KL Wasserstein distance.
 
 Install the development version
 ===============================
 
 From a console or terminal clone the repository and install CELER:
 
+::
 
     git clone https://github.com/hichamjanati/mtw.git
-    cd mtw/
+    cd celer/
     conda env create --file environment.yml
     source activate mtw-env
     pip install --no-deps -e .
