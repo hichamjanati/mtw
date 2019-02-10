@@ -1,0 +1,15 @@
+# Cython generation:
+*.cpp
+*.so
+*.o
+
+# Python precompilation
+*pyc
+
+
+# cache
+.pytest_cache/*
+
+
+.DS_Store
+MANIFEST
