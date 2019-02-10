@@ -1,19 +1,16 @@
-from smtr import utils
+from mtw import utils
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_allclose
-from smtr import groundmetric
-from smtr.estimators import MTW
+from numpy.testing import assert_allclose
+from mtw.utils import groundmetric
+from mtw import MTW
 
 
-def test_mtw_warmstart():
+def test_mtw_convolution():
 
     # Estimator params
-    alpha = 10.
-    beta_fr = 0.3
-
-    seed = 653
+    seed = 42
     width, n_tasks = 12, 2
-    nnz = 1
+    nnz = 2
     overlap = 0.
     denoising = False
     binary = False
@@ -28,7 +25,7 @@ def test_mtw_warmstart():
     # ot params
     epsilon = 1. / n_features
     stable = False
-    gamma = 10.
+    gamma = 10
     Mbig = utils.groundmetric2d(n_features, p=2, normed=False)
     m = np.median(Mbig)
     M = groundmetric(width, p=2, normed=False)
@@ -49,30 +46,30 @@ def test_mtw_warmstart():
                                  scaled=True,
                                  seed=seed)
 
-    betamax = np.array([x.T.dot(y) for x, y in zip(X, Y)]).max()
-    beta = beta_fr * betamax
+    betamax = np.array([abs(x.T.dot(y)) for x, y in zip(X, Y)]).max()
+    beta_fr = 0.3
+    beta = beta_fr * betamax / n_samples
+    alpha = 10. / n_samples
 
-    mtw_model = MTW(M=M, alpha=alpha, beta=beta, epsilon=epsilon, gamma=gamma,
-                    stable=stable, tol_ot=1e-6, tol=1e-6,
-                    maxiter_ot=50, maxiter=5000)
+    callback_options = {'callback': True,
+                        'x_real': coefs_flat.reshape(- 1, n_tasks),
+                        'verbose': True, 'rate': 1, 'prc_only': False}
+
+    # mtw_model using convolutions to compute OT barycenters
+    mtw_model = MTW(M=-M / epsilon, alpha=alpha, beta=beta, epsilon=epsilon,
+                    gamma=gamma, stable=stable, tol_ot=1e-8, tol=1e-5,
+                    maxiter_ot=200, maxiter=5000, **callback_options,
+                    positive=True)
     # first fit
     mtw_model.fit(X, Y)
-    assert mtw_model.log_['dloss'][-1] < 1e-5
+    assert mtw_model.log_['dloss'][-1] < 1e-4
 
-    # small change of hyperparamters
-    # mtw_model.beta += 0.01
-    mtw_model.alpha += 1
-
-    mtw_model.warmstart = True
-    mtw_model.fit(X, Y)
-    assert mtw_model.log_['dloss'][-1] < 1e-5
-    print(np.min(mtw_model.log_['loss']))
-    coefs_warmstart = mtw_model.coefs_
-
-    mtw_model.warmstart = False
-    mtw_model.fit(X, Y)
-    assert mtw_model.log_['dloss'][-1] < 1e-5
-    print(np.min(mtw_model.log_['loss']))
-    coefs_no_warmstart = mtw_model.coefs_
-
-    assert_array_almost_equal(coefs_warmstart, coefs_no_warmstart, decimal=3)
+    M = Mbig / m
+    # mtw_model using standard sinkhorn
+    mtw_model2 = MTW(M=-M / epsilon, alpha=alpha, beta=beta, epsilon=epsilon,
+                     gamma=gamma, stable=stable, tol_ot=1e-8, tol=1e-5,
+                     maxiter_ot=200, maxiter=5000, **callback_options,
+                     positive=True)
+    mtw_model2.fit(X, Y)
+    assert mtw_model2.log_['dloss'][-1] < 1e-4
+    assert_allclose(mtw_model.coefs_, mtw_model2.coefs_, atol=1e-5, rtol=1e-5)
