@@ -34,7 +34,20 @@ From a console or terminal clone the repository and install MTW:
 Demos & Examples
 ================
 
+Given a ground metric `M` and the entropy parameter that define the Wasserstein
+metric, an MTW object can be created and fitted on multi-task regression data
+`(X, y)`. Where the shapes of `X` and `Y` are (n_tasks, n_samples, n_features)
+and (n_tasks, n_samples)
 
+.. code:: python
+
+   >>> from mtw import MTW
+   >>> epsilon = 0.01
+   >>> mtw = MTW(M= - M / eps, epsilon=eps)
+   >>> mtw.fit(X, y)
+   >>> coefs = mtw.coefs_
+
+See ./examples for more.
 
 Dependencies
 ============
