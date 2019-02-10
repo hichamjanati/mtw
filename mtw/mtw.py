@@ -2,7 +2,7 @@ import numpy as np
 from .solver import solver
 from .utils import inspector_mtw
 from .utils import auc_prc, get_unsigned
-from .ot import otfunctions
+from . import otfunctions
 try:
     import cupy as cp
     get_module = cp.get_array_module
@@ -98,8 +98,7 @@ class MTW:
         """Set callback if `callback` is True."""
         self.callback_f = None
         if self.callback:
-            self.callback_f = inspector_mtw(self.objective,
-                                            **self.callback_kwargs)
+            self.callback_f = inspector_mtw(**self.callback_kwargs)
 
     def fit(self, X, Y):
         """Launch MTW solver.

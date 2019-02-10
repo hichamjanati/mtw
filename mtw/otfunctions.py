@@ -14,515 +14,6 @@ except ImportError:
         return np
 
 
-def ot1dkl_(p, q, M, epsilon=0.01, gamma=1., maxiter=20000, tol=1e-2):
-    """Compute the Wasserstein divergence between histograms.
-
-    Parameters
-    ----------
-    p: numpy array (n_features, n_hists)
-        Must be non-negative.
-    q: numpy array (n_features, )
-        Must be non-negative.
-    M: numpy array (n_features, n_features)
-        Ground metric matrix defining the Wasserstein distance.
-        if None, taken as euclidean gram matrix over [1:n_features]
-        normalized by its median.
-    epsilon: float > 0.
-        Entropy weight. (optional, default 5 / n_features)
-    gamma: float > 0.
-        Kullback-Leibler marginal constraint weight w.r.t q.
-    maxiter: int > 0.
-        Maximum number of iterations of the Sinkhorn algorithm.
-    tol: float >= 0.
-        Precision threshold of the Sinkhorn algorithm.
-        (optional, default 1e-10)
-
-    Returns
-    -------
-    float.
-    Wasserstein divergence between p and q.
-
-    """
-    xp = get_module(M)
-    n_features = M.shape[0]
-    K = xp.exp(- M / epsilon)
-    Kb = K.mean(axis=1)
-
-    if p.ndim > 1:
-        p = p.reshape(len(p), -1).copy()
-        q = q.reshape(len(q), -1).copy()
-        Kb = Kb.reshape(-1, 1)
-    frac = gamma / (gamma + epsilon)
-
-    a, b = xp.ones((2, n_features))
-    log = {'cstr': [], 'obj': [], 'flag': 0, 'objexact': [], 'b': [], 'a': []}
-    f0 = K.sum()
-    f = f0
-    cstr = 10
-    for i in range(maxiter):
-        a = (p / Kb) ** frac
-        Ka = K.T.dot(a)
-        b = (q / Ka) ** frac
-        oldf = f
-        Kb = K.dot(b)
-        f = utils.wklobjective(a, Kb, p, q, f0, epsilon, gamma)
-        cstr = abs(f - oldf) / max(abs(f), abs(oldf), 1)
-        log["cstr"].append(cstr)
-        log["obj"].append(f)
-        if cstr < tol:
-            break
-
-    if i == maxiter - 1:
-        warnings.warn("*** Maxiter reached ! err = {} ***".format(cstr))
-        log['flag'] = 3
-
-    if not log['obj']:
-        f = utils.wklobjective(a, Kb, p, q, f0, epsilon, gamma)
-    out = f
-    return out, log
-
-
-def ot1d_(p, q, M, epsilon=0.01, maxiter=20000, tol=1e-2):
-    """Compute the Wasserstein divergence between histograms.
-
-    Parameters
-    ----------
-    p: numpy array (n_features, n_hists)
-        Must be non-negative.
-    q: numpy array (n_features, )
-        Must be non-negative.
-    M: numpy array (n_features, n_features)
-        Ground metric matrix defining the Wasserstein distance.
-        if None, taken as euclidean gram matrix over [1:n_features]
-        normalized by its median.
-    epsilon: float > 0.
-        Entropy weight. (optional, default 5 / n_features)
-    maxiter: int > 0.
-        Maximum number of iterations of the Sinkhorn algorithm.
-    tol: float >= 0.
-        Precision threshold of the Sinkhorn algorithm.
-        (optional, default 1e-10)
-    returnlog: boolean.
-        default False. if True, a list of errors is returned.
-    returnmarginal: boolean.
-        default False. if True, returns the transport marginal.
-
-    Returns
-    -------
-    float.
-    Wasserstein divergence between p and q.
-
-    """
-    xp = get_module(M)
-    n_features = M.shape[0]
-    K = xp.exp(- M / epsilon)
-    Kb = K.mean(axis=1)
-
-    if p.ndim > 1:
-        p = p.reshape(len(p), -1).copy()
-        q = q.reshape(len(q), -1).copy()
-        Kb = Kb.reshape(-1, 1)
-
-    a, b = xp.ones((2, n_features))
-    log = {'cstr': [], 'obj': [], 'flag': 0, 'objexact': [], 'b': [], 'a': []}
-    cstr = 10
-    for i in range(maxiter):
-        a = p / Kb
-        Ka = K.T.dot(a)
-        b = q / Ka
-        Kb = K.dot(b)
-        if i % 10 == 0:
-            cstr = abs(a * Kb - p).max()
-            log["cstr"].append(cstr)
-            if cstr < tol:
-                break
-    if i == maxiter - 1:
-        warnings.warn("*** Maxiter reached ! err = {} ***".format(cstr))
-        log['flag'] = 3
-
-    f = ((np.log(a + 1e-100) - 1) * p + np.log(b + 1e-100) * q).sum()
-    f *= epsilon
-
-    return f, log
-
-
-def ot1d_log(p, q, M, epsilon=0.01, maxiter=20000, tol=1e-2):
-    """Compute the Wasserstein divergence between histograms.
-
-    Parameters
-    ----------
-    p: numpy array (n_features, n_hists)
-        Must be non-negative.
-    q: numpy array (n_features, )
-        Must be non-negative.
-    M: numpy array (n_features, n_features)
-        Ground metric matrix defining the Wasserstein distance.
-        if None, taken as euclidean gram matrix over [1:n_features]
-        normalized by its median.
-    epsilon: float > 0.
-        Entropy weight. (optional, default 5 / n_features)
-    maxiter: int > 0.
-        Maximum number of iterations of the Sinkhorn algorithm.
-    tol: float >= 0.
-        Precision threshold of the Sinkhorn algorithm.
-        (optional, default 1e-10)
-    returnlog: boolean.
-        default False. if True, a list of errors is returned.
-    returnmarginal: boolean.
-        default False. if True, returns the transport marginal.
-
-    Returns
-    -------
-    float.
-    Wasserstein divergence between p and q.
-
-    """
-    xp = get_module(M)
-    K = xp.exp(- M / epsilon)
-    Kb = np.log(K.mean(axis=1))
-
-    log = {'cstr': [], 'obj': [], 'flag': 0, 'objexact': [], 'b': [], 'a': []}
-    cstr = 10
-    logp = np.log(p + 1e-100)
-    logq = np.log(q + 1e-100)
-    for i in range(maxiter):
-        a = logp - Kb
-        Ka = utils.logsumexp(a[None, :] - M.T / epsilon, axis=1)
-        b = logq - Ka
-        Kb = utils.logsumexp(b[None, :] - M / epsilon, axis=1)
-
-        if i % 10 == 0:
-            cstr = abs(np.exp(a + Kb) - p).max()
-            log["cstr"].append(cstr)
-            if cstr < tol:
-                break
-    if i == maxiter - 1:
-        warnings.warn("*** Maxiter reached ! err = {} ***".format(cstr))
-        log['flag'] = 3
-
-    f = ((a - 1) * p + b * q).sum()
-    f *= epsilon
-
-    return f, log
-
-
-def ot1dkl_log(p, q, M, epsilon=0.01, gamma=1., maxiter=20000,
-               tol=1e-2):
-    """Compute the Wasserstein divergence between histograms.
-
-    Parameters
-    ----------
-    p: numpy array (n_features, n_hists)
-        Must be non-negative.
-    q: numpy array (n_features, )
-        Must be non-negative.
-    M: numpy array (n_features, n_features)
-        Ground metric matrix defining the Wasserstein distance.
-        if None, taken as euclidean gram matrix over [1:n_features]
-        normalized by its median.
-    epsilon: float > 0.
-        Entropy weight. (optional, default 5 / n_features)
-    gamma: float > 0.
-        Kullback-Leibler marginal constraint weight w.r.t q.
-    maxiter: int > 0.
-        Maximum number of iterations of the Sinkhorn algorithm.
-    tol: float >= 0.
-        Precision threshold of the Sinkhorn algorithm.
-        (optional, default 1e-10)
-
-    Returns
-    -------
-    float.
-    Wasserstein divergence between p and q.
-
-    """
-    xp = get_module(M)
-    n_features = M.shape[0]
-    p, q, M = p, q, M
-
-    K = xp.exp(- M / epsilon)
-    Ks = K.copy()
-    Kb = K.sum(axis=1)
-
-    if p.ndim > 1:
-        p = p.reshape(len(p), -1).copy()
-        q = q.reshape(len(q), -1).copy()
-        Kb = Kb.reshape(-1, 1)
-
-    frac = gamma / (gamma + epsilon)
-
-    a, b = xp.ones((2, n_features))
-    u, v = xp.zeros((2, n_features))
-    log = {'cstr': [], 'obj': [], 'flag': 0, 'objexact': []}
-    f0 = K.sum()
-    f = f0
-    cstr = 10
-    for i in range(maxiter):
-        a = (p / (Kb + 1e-16)) ** frac * xp.exp(- u / (epsilon + gamma))
-        Ka = Ks.T.dot(a)
-        b = (q / (Ka + 1e-16)) ** frac * xp.exp(- v / (epsilon + gamma))
-
-        if (a > 1e5).any() or (b > 1e5).any():
-            u += epsilon * xp.log(a + 1e-16)
-            v += epsilon * xp.log(b + 1e-16)
-            Ks = xp.exp((u.reshape(-1, 1) + v.reshape(1, -1) - M) / epsilon)
-            b = xp.ones(n_features)
-        Kb = Ks.dot(b)
-
-        oldf = f
-        f = utils.wklobjective(a, Kb, p, q, f0, epsilon, gamma, u=u)
-
-        cstr = abs(f - oldf) / max(abs(f), abs(oldf), 1)
-        log["cstr"].append(cstr)
-        log["obj"].append(f)
-
-        if cstr < tol:
-            break
-    if i == maxiter - 1:
-        warnings.warn("*** Maxiter reached ! err = {} ***".format(cstr))
-        print("Last error: ", cstr)
-
-        log['flag'] = 3
-
-    f = utils.wklobjective(a, Kb, p, q, f0, epsilon, gamma, u=u)
-
-    return f, log
-
-
-def ot2dkl_log(x, y, M, epsilon=1, gamma=1.,
-               maxiter=20000, tol=1e-2, warmstart=None):
-    """OT distance for 2D images - log domain."""
-    xp = get_module(x)
-    width1, width2 = x.shape
-    frac = gamma / (gamma + epsilon)
-    Kb = warmstart
-    x_ = x[:, :, None]
-    b = np.zeros_like(x_)
-
-    if warmstart is None:
-        Kb = utils.kls(b, - M / epsilon)
-    f0 = np.exp(- M / epsilon).sum() ** 2
-    log = {'cstr': [], 'flag': 0, 'obj': []}
-    logx = xp.log(x + 1e-10)[:, :, None]
-    logy = xp.log(y + 1e-10)[:, :, None]
-
-    for i in range(maxiter):
-        a = frac * (logx - Kb)
-        Ka = utils.kls(a, - M.T / epsilon)
-        b = frac * (logy - Ka)
-        Kb = utils.kls(b, - M / epsilon)
-        if i % 10 == 0:
-            cstr = abs(x - np.exp(Kb + a)).max()
-            log["cstr"].append(cstr)
-            if cstr < tol:
-                break
-
-    if i == maxiter - 1:
-        warnings.warn("Early stop, Maxiter too low !")
-        print("Last error: ", cstr)
-        log['flag'] = 3
-    marginals = xp.exp(a + Kb)
-    f = utils.wklobjective_converged(x.flatten(), y.flatten(), f0,
-                                     marginals.sum(),
-                                     epsilon, gamma)
-
-    # return f, a.flatten(), b.flatten(), log
-    return f, log
-
-
-def ot2d_log(x, y, M, epsilon, maxiter=20000,
-             tol=1e-2, warmstart=None):
-    """OT distance for 2D images - log domain."""
-    xp = get_module(x)
-    width1, width2 = x.shape
-    Kb = warmstart
-    b = np.zeros_like(x)
-
-    if warmstart is None:
-        Kb = utils.kls1d(b, - M / epsilon)
-    log = {'cstr': [], 'flag': 0, 'obj': []}
-    logx = xp.log(x + 1e-10)
-    logy = xp.log(y + 1e-10)
-
-    for i in range(maxiter):
-        a = logx - Kb
-        Ka = utils.kls1d(a, - M.T / epsilon)
-        b = logy - Ka
-        Kb = utils.kls1d(b, - M / epsilon)
-        if i % 10 == 0:
-            cstr = abs(x - np.exp(Kb + a)).max()
-            log["cstr"].append(cstr)
-            if cstr < tol:
-                break
-    if i == maxiter - 1:
-        warnings.warn("Early stop, Maxiter too low !")
-        print("Last error: ", cstr)
-
-        log['flag'] = 3
-    f = ((a - 1) * x + b * y).sum()
-    f *= epsilon
-
-    # return f, a.flatten(), b.flatten(), log
-    return f, log
-
-
-def ot2dkl_(x, y, M, epsilon=1, gamma=1.,
-            maxiter=20000, tol=1e-2, warmstart=None):
-    """OT distance for 2D images."""
-    width1, width2 = x.shape
-    frac = gamma / (gamma + epsilon)
-    Kb = warmstart
-    b = np.ones_like(x)
-    K = np.exp(- M / epsilon)
-    if warmstart is None:
-        Kb = utils.klconv1d(b, K)
-    f0 = K.sum() ** 2
-    log = {'cstr': [], 'flag': 0, 'obj': []}
-
-    for i in range(maxiter):
-        a = (x / Kb) ** frac
-        Ka = utils.klconv1d(a, K.T)
-        b = (y / Ka) ** frac
-        Kb = utils.klconv1d(b, K)
-        if i % 10 == 0:
-            cstr = abs(a ** (1 / frac) * Kb - x).max()
-            log["cstr"].append(cstr)
-            if cstr < tol:
-                break
-
-    if i == maxiter - 1:
-        warnings.warn("Early stop, Maxiter too low !")
-        print("Last error: ", cstr)
-
-        log['flag'] = 3
-    marginals = a * Kb
-    f = utils.wklobjective_converged(x.flatten(), y.flatten(), f0,
-                                     marginals.sum(),
-                                     epsilon, gamma)
-
-    # return f, a.flatten(), b.flatten(), log
-    return f, log
-
-
-def ot2d_(x, y, M, epsilon, maxiter=20000,
-          tol=1e-2, warmstart=None):
-    """OT distance for 2D images."""
-    width1, width2 = x.shape
-    Kb = warmstart
-    b = np.ones_like(x)
-    K = np.exp(- M / epsilon)
-    if warmstart is None:
-        Kb = utils.klconv1d(b, K)
-    log = {'cstr': [], 'flag': 0, 'obj': []}
-
-    for i in range(maxiter):
-        a = x / Kb
-        Ka = utils.klconv1d(a, K.T)
-        b = y / Ka
-        Kb = utils.klconv1d(b, K)
-        if i % 10 == 0:
-            cstr = abs(a * Kb - x).max()
-            log["cstr"].append(cstr)
-            if cstr < tol:
-                break
-
-    if i == maxiter - 1:
-        warnings.warn("Early stop, Maxiter too low !")
-        print("Last error: ", cstr)
-
-        log['flag'] = 3
-
-    f = ((np.log(a + 1e-100) - 1) * x + np.log(b + 1e-100) * y).sum()
-    f *= epsilon
-
-    # return f, a.flatten(), b.flatten(), log
-    return f, log
-
-
-def ot2d(x, y, M, epsilon, log=True, **kwargs):
-    """General OT 2d function."""
-    if log:
-        ot = ot2d_log
-    else:
-        ot = ot2d_
-    output = ot(x, y, M, epsilon, **kwargs)
-
-    return output
-
-
-def ot1d(x, y, M, epsilon, log=True, **kwargs):
-    """General OT 2d function."""
-    if log:
-        ot = ot1d_log
-    else:
-        ot = ot1d_
-    output = ot(x, y, M, epsilon, **kwargs)
-
-    return output
-
-
-def ot1dkl(x, y, M, epsilon, log=True, **kwargs):
-    """General OT 2d function."""
-    if log:
-        ot = ot1dkl_log
-    else:
-        ot = ot1dkl_
-    output = ot(x, y, M, epsilon, **kwargs)
-
-    return output
-
-
-def ot2dkl(x, y, M, epsilon, log=True, **kwargs):
-    """General OT 2d function."""
-    if log:
-        ot = ot2dkl_log
-    else:
-        ot = ot2dkl_
-    output = ot(x, y, M, epsilon, **kwargs)
-
-    return output
-
-
-def ot_amari(x, y, M, epsilon, gamma=0., wyy0=None, normed=True, **kwargs):
-    """OT metric for 2D images."""
-    assert x.shape == y.shape
-    if x.ndim == 3:
-        axis = (0, 1)
-    else:
-        axis = 0
-    if wyy0 is None:
-        wyy = 0.
-    else:
-        wyy = wyy0
-    if gamma == 0.:
-        x = x / x.sum(axis=axis)
-        y = y / y.sum(axis=axis)
-
-        if x.ndim == 3:
-            ot_dist = ot2d
-        else:
-            ot_dist = ot1d
-    else:
-        if x.ndim == 3:
-            ot_dist = ot2dkl
-        else:
-            ot_dist = ot1dkl
-
-    wxy, wxx = 0., 0.
-    for a, b in zip(x.T + 1e-8, y.T + 1e-8):
-        wxy += ot_dist(a.T, b.T, M, epsilon, **kwargs)[0]
-        if np.isnan(wxy):
-            break
-        if normed:
-            wxx += ot_dist(a.T, a.T, M, epsilon, **kwargs)[0]
-            if wyy0 is None:
-                wyy += ot_dist(b.T, b.T, M, epsilon, **kwargs)[0]
-
-    f = wxy - (wxx + wyy) / 2
-
-    return f
-
-
 def emd(x, y, M):
     n_tasks = x.shape[-1]
     assert x.shape == y.shape
@@ -537,3 +28,312 @@ def emd(x, y, M):
         b = np.ascontiguousarray(b)
         f += emd2(a, b, M)
     return f / n_tasks
+
+
+def barycenterkl_log(P, M, epsilon, gamma, b=None, tol=1e-4,
+                     maxiter=1000):
+    """KL OT Barycenters for 2D images."""
+    xp = get_module(M)
+    frac = gamma / (gamma + epsilon)
+    n_tasks = P.shape[-1]
+    n_features = M.shape[-1]
+    psum = P.sum()
+    support = P.any(axis=1)
+    logps = np.log(P[support] + 1e-100)
+    logps = xp.asarray(logps)
+    M = M[xp.asarray(support)]
+    utils.free_gpu_memory(xp)
+
+    if b is None:
+        Kb = utils.logsumexp(M, axis=1)
+        Kb = xp.tile(Kb, (n_tasks, 1)).T
+        utils.free_gpu_memory(xp)
+
+    else:
+        Kb = xp.zeros((len(M), n_tasks))
+        for k in range(n_tasks):
+            Kb[:, k] = utils.logsumexp(b[:, k][None, :] + M, axis=1)
+            utils.free_gpu_memory(xp)
+    log = {'cstr': [], 'flag': 0, 'obj': []}
+    weights = xp.ones(n_tasks) / n_tasks
+    logweights = xp.log(weights)[None, :]
+    qold = xp.ones(n_features)[:, None]
+    Ka = xp.zeros((n_features, n_tasks))
+    for i in range(maxiter):
+        a = frac * (logps - Kb)  # it's actually a
+        for k in range(n_tasks):
+            Ka[:, k] = utils.logsumexp(a[:, k][:, None] + M, axis=0)
+            utils.free_gpu_memory(xp)
+        logq = logweights + Ka * (1 - frac)  # it's weighted ka
+        logq = utils.logsumexp(logq, axis=1)  # this is q in log
+        logq = (1 / (1 - frac)) * logq
+        b = frac * (logq[:, None] - Ka)
+        for k in range(n_tasks):
+            Kb[:, k] = utils.logsumexp(b[:, k][None, :] + M, axis=1)
+            utils.free_gpu_memory(xp)
+        q = xp.exp(logq)
+        cstr = float(abs(q - qold).max())
+        cstr /= float(max(q.max(), qold.max(), 1e-20))
+        qold = q.copy()
+        log["cstr"].append(cstr)
+        # uncomment to compute exact loss
+        # marginals = np.exp(a + Kb).T
+        # f = - (2 * gamma + epsilon) * marginals.sum()
+        # f += gamma * (psum + q.sum() * n_tasks)
+        # f += (((gamma + epsilon) * a + gamma * (Kb - logps)) *
+        # marginals.T).sum()
+        # log["obj"].append(f)
+        if cstr < tol and i > 5:
+            break
+        # f = utils.wklobjective_log(a, Kb, P, q, K0, epsilon, gamma)
+        # log["obj"].append(f)
+
+    if i == maxiter - 1:
+        warnings.warn("Early stop, Maxiter too low !")
+        log['flag'] = 3
+
+    try:
+        a = a.get()
+        Kb = Kb.get()
+        q = q.get()
+        logps = logps.get()
+        utils.free_gpu_memory(xp)
+
+    except AttributeError:
+        pass
+    marginals = np.exp(a + Kb).T
+    marginals[~np.isfinite(marginals)] = 1
+
+    m = np.zeros((n_tasks, n_features))
+    f = utils.wklobjective_converged(n_tasks * q.sum(), 0.,
+                                     psum,
+                                     epsilon, gamma)
+    # uncomment to compute exact loss
+    # f = - (2 * gamma + epsilon) * marginals.sum()
+    # f += gamma * (psum + q.sum() * n_tasks)
+    # f += (((gamma + epsilon) * a + gamma * (Kb - logps)) * marginals.T).sum()
+    # log["obj"].append(f)
+    m[:, support] = marginals
+    marginals = m
+    b[~np.isfinite(b)] = 0.
+
+    return f, log, marginals, b, q
+
+
+def barycenterkl(P, M, epsilon, gamma, b=None, tol=1e-4,
+                 maxiter=1000):
+    """Compute Unblanced Wasserstein barycenter.
+    """
+    xp = get_module(M)
+    frac = gamma / (gamma + epsilon)
+    psum = P.sum()
+    n_features, n_tasks = P.shape
+    frac = gamma / (gamma + epsilon)
+    support = (P > 1e-20).any(axis=1)
+    if len(support) == 0:
+        support = P.any(axis=1)
+    P = P[support]
+    P = xp.asarray(P)
+    M = M[xp.asarray(support)]
+    M = xp.exp(M)
+    if b is None:
+        b = xp.ones((n_features, n_tasks))
+    Kb = M.dot(b)
+
+    log = {'cstr': [], 'flag': 0, 'obj': []}
+    weights = xp.ones(n_tasks) / n_tasks
+    q = xp.ones(n_features)
+    qold = q.copy()
+    return_nan = False
+    utils.free_gpu_memory(xp)
+
+    for i in range(maxiter):
+        a = (P / Kb) ** frac
+        utils.free_gpu_memory(xp)
+
+        Ka = M.T.dot(a)
+        q = ((Ka ** (1 - frac)).dot(weights))
+        q = q ** (1 / (1 - frac))
+        Q = q[:, None]
+        utils.free_gpu_memory(xp)
+
+        cstr = float(abs(q - qold).max() / max(q.max(), qold.max(), 1e-10))
+        qold = q.copy()
+        b_old = b.copy()
+        b = (Q / Ka) ** frac
+        utils.free_gpu_memory(xp)
+
+        if not xp.isfinite(b).all():
+            return_nan = True
+            break
+        Kb = M.dot(b)
+        log["cstr"].append(cstr)
+        if abs(cstr) < tol and i > 5:
+            break
+        # marginals = (a * Kb).T
+        utils.free_gpu_memory(xp)
+        # uncomment to compute exact loss
+        # f = - (2 * gamma + epsilon) * marginals.sum()
+        # f += gamma * (psum + q.sum() * n_tasks)
+        # f += (((gamma + epsilon) * np.log(a + 1e-100) + gamma *
+        #      (np.log(Kb + 1e-100) - np.log(P + 1e-100))) * marginals.T).sum()
+        # log["obj"].append(f)
+    if i == maxiter - 1:
+        warnings.warn("Early stop, Maxiter too low !")
+        log['flag'] = - 1
+    marginals = (a * Kb).T
+
+    try:
+        marginals = marginals.get()
+        q = q.get()
+        utils.free_gpu_memory(xp)
+        P = P.get()
+        Kb = Kb.get()
+        a = a.get()
+
+    except AttributeError:
+        pass
+
+    f = utils.wklobjective_converged(n_tasks * q.sum(), 0.,
+                                     psum,
+                                     epsilon, gamma)
+    m = np.zeros((n_tasks, n_features))
+    marginals[~np.isfinite(marginals)] = 1
+    m[:, support] = marginals
+    marginals = m
+    if return_nan or xp.isnan(f):
+        f = None
+        b = b_old
+    # else:
+    #     uncomment to compute exact loss
+    #     f = - (2 * gamma + epsilon) * marginals.sum()
+    #     f += gamma * (psum + q.sum() * n_tasks)
+    #     xx = ((Kb / P) ** gamma) * (a ** (epsilon + gamma))
+    #     xx[xx == 0.] = 0.
+    #     f += (np.log(xx) * marginals.T).sum()
+    #     log["obj"].append(f)
+    return f, log, marginals, b, q
+
+
+def barycenterkl_img_log(P, M, epsilon, gamma, b=None, tol=1e-4,
+                         maxiter=1000):
+    """KL OT Barycenters for 2D images."""
+    xp = get_module(M)
+    psum = P.sum()
+    P = P.reshape(xp.r_[M.shape, -1])
+    n_tasks = P.shape[-1]
+    n_features = P.size // n_tasks
+    frac = gamma / (gamma + epsilon)
+    if b is None:
+        b = xp.zeros_like(P)
+    Kb = utils.kls(b, M)
+    log = {'cstr': [], 'flag': 0, 'obj': []}
+    weights = xp.ones(n_tasks) / n_tasks
+    logweights = xp.log(weights)[None, None, :]
+    logp = xp.log(P + 1e-10)
+    qold = P.mean(axis=-1) + 1e-10
+    for i in range(maxiter):
+        a = frac * (logp - Kb)
+        Ka = utils.kls(a, M.T)
+        kaw = logweights + (Ka) * (1 - frac)
+        logq = utils.logsumexp(kaw, axis=-1) - xp.log(weights.sum())
+        logq = (1 / (1 - frac)) * logq
+        logQ = logq[:, :, xp.newaxis]
+        b = frac * (logQ - Ka)
+        Kb = utils.kls(b, M)
+        q = xp.exp(logq)
+
+        if i % 10 == 0:
+            cstr = float((abs(q - qold)).max())
+            cstr /= float(max(q.max(), qold.max(), 1e-20))
+        qold = q.copy()
+
+        log["cstr"].append(cstr)
+        if cstr < tol and i > 5:
+            break
+
+        # f = utils.wklobjective_log(a, Kb, P, q, 0, epsilon, gamma)
+        # log["obj"].append(f)
+        utils.free_gpu_memory(xp)
+
+    if i == maxiter - 1:
+        warnings.warn("Early stop, Maxiter too low !")
+        log['flag'] = 3
+
+    marginals = xp.exp(a + Kb).reshape(n_features, n_tasks).T
+    try:
+        marginals = marginals.get()
+        q = q.get()
+    except AttributeError:
+        pass
+
+    f = utils.wklobjective_converged(n_tasks * q.sum(), 0.,
+                                     psum,
+                                     epsilon, gamma)
+    # f = utils.wklobjective_log(a, Kb, P, q, 0, epsilon, gamma)
+
+    return f, log, marginals, b, q
+
+
+def barycenterkl_img(P, M, epsilon, gamma, b=None, tol=1e-4,
+                     maxiter=1000):
+    """KL OT Barycenters for 2D images."""
+    xp = get_module(M)
+    psum = P.sum()
+    P = P.reshape(xp.r_[M.shape, -1])
+    frac = gamma / (gamma + epsilon)
+    n_tasks = P.shape[-1]
+    if b is None:
+        b = xp.ones_like(P)
+    M = xp.exp(M)
+    Kb = utils.klconv1d_list(b, M)
+
+    log = {'cstr': [], 'flag': 0, 'obj': []}
+    weights = xp.ones(n_tasks) / n_tasks
+    # qold = P.mean(axis=-1)
+    return_nan = False
+    margs_old = P.copy()
+
+    for i in range(maxiter):
+        a = (P / Kb) ** frac
+        Ka = utils.klconv1d_list(a, M.T)
+        q = ((Ka) ** (1 - frac)).dot(weights)
+        q = (q / (weights.sum())) ** (1 / (1 - frac))
+        Q = q[:, :, xp.newaxis]
+        b_old = b.copy()
+        b = (Q / Ka) ** frac
+
+        Kb = utils.klconv1d_list(b, M)
+        margs = a * Kb
+        if not xp.isfinite(margs).all():
+            return_nan = True
+            break
+
+        if i % 10 == 0:
+            cstr = float((abs(margs - margs_old)).max())
+            cstr /= float(max(margs.max(), margs_old.max(), 1e-20))
+        margs_old = margs.copy()
+
+        log["cstr"].append(cstr)
+        if cstr < tol:
+            break
+        utils.free_gpu_memory(xp)
+    if i == maxiter - 1:
+        warnings.warn("Early stop, Maxiter too low !")
+        log['flag'] = 3
+
+    marginals = margs.reshape(- 1, n_tasks).T
+    try:
+        marginals = marginals.get()
+        q = q.get()
+    except AttributeError:
+        pass
+    f = utils.wklobjective_converged(n_tasks * q.sum(), 0.,
+                                     psum,
+                                     epsilon, gamma)
+    # f = utils.wklobjective(a, Kb, P, q, 0, epsilon, gamma)
+
+    if return_nan:
+        f = None
+        b = b_old
+    return f, log, marginals, b, q

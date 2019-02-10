@@ -3,8 +3,6 @@ import warnings
 
 from scipy.stats import norm as gaussian
 from sklearn.metrics import average_precision_score
-from scipy.ndimage.filters import gaussian_filter
-from skimage.measure import block_reduce
 from numba import (jit, float64)
 import numbers
 
@@ -59,29 +57,6 @@ def check_random_state(seed):
                      ' instance' % seed)
 
 
-def forwardop(theta, sigma=0.1, r=2):
-    """Apply design matrix."""
-
-    divisors = [1]
-    for div in range(2, 10):
-        if r % div == 0:
-            if r // div in divisors:
-                break
-            divisors.append(div)
-    r_v = r // divisors[-1]
-    theta_blurred = gaussian_filter(theta, sigma=sigma)
-    reduced = block_reduce(theta_blurred, block_size=(r // r_v, r_v))
-    return reduced
-
-
-def apply_forwardop(coefs, sigma, r):
-    """Apply design matrix to list of images."""
-    L = []
-    for c in coefs.T:
-        L.append(forwardop(c, sigma=sigma, r=r))
-    return np.array(L).T
-
-
 def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
                   n_targets=1, positive=False):
     """
@@ -96,19 +71,6 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
     X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
     return X, y, w
-
-
-def get_design_matrix(f, n_samples=None, n_features=None, r=2, sigma=0.1):
-    """Compute design matrix of a linear function f."""
-
-    width = int(n_features ** 0.5)
-    X = np.zeros((n_samples, n_features))
-    for i in range(n_features):
-        a = np.zeros(n_features)
-        a[i] = 1.
-        X[:, i] = f(a.reshape(width, width), sigma=sigma, r=r).flatten()
-
-    return X
 
 
 def generate_dirac_images(width, n_tasks, nnz, seed=None,
@@ -179,176 +141,6 @@ def generate_dirac_images(width, n_tasks, nnz, seed=None,
     return coefs
 
 
-def _viz_images(width, n_tasks, sparsity=1 / 100, seed=None,
-                shift_max=None, overlap=False, binary=False):
-    """Generate dirac images."""
-    if shift_max is None:
-        shift_max = max(int(width * sparsity), 1)
-
-    rnd = np.random.RandomState(seed)
-    row = 3 * width // 10
-    col = 7 * width // 10
-    C = []
-    n = max(int(width * np.sqrt(sparsity)), 1)
-    offset = max(1, n)
-    shifts = []
-    shifts.append([0, 0])
-
-    if overlap:
-        overlap = float(overlap)
-        lim = int((1 - overlap) * offset ** 2)
-        for i in range(n_tasks - 1):
-            while(True):
-                s = rnd.randint(offset + 1, size=2)
-                dec = offset * s.sum() - s.prod()
-                if dec == lim or dec == lim + 1:
-                    if overlap == 1:
-                        if dec != lim + 1:
-                            shifts.append(list(s))
-                            break
-                    else:
-                        shifts.append(list(s))
-                        break
-
-    else:
-
-        shift_min = offset
-        shift = max(shift_max, shift_min)
-        shifts_ = shift * np.array([[0, 1], [1, 0], [1, 1], [1, -1]])
-        rnd.shuffle(shifts_)
-        shifts = [[0, 0]]
-        stop = False
-        for ss in shifts_:
-            if stop:
-                break
-            for s in [ss, - ss]:
-                shifts.append(list(s))
-                if len(shifts) == n_tasks:
-                    stop = True
-                    break
-
-    for i, (dx, dy) in enumerate(shifts):
-        coef = np.zeros((width, width))
-        x = np.clip(offset, row + dx, width)
-        y = np.clip(offset, col + dy, width)
-        if binary:
-            v = 1.
-        else:
-            v = rnd.rand() + 0.5
-        coef[x - offset: x,
-             y - offset: y] = v
-        coef += coef.T
-        C.append(coef)
-    coefs = np.array(C).T
-    return coefs
-
-
-def coefs_to_rgb(coefs):
-    """Make Rgba image."""
-    colors = np.array([(1, 0, 0), (0, 0, 1), (0, 0, 0), (0, 1, 0)])
-    width, width, n_tasks = coefs.shape
-    img = np.zeros((width, width, 3))
-    for coef, color in zip(coefs.T, colors):
-        newcoef = np.ones((width, width, 3))
-        indx = np.where(coef > 1e-5)
-        newcoef[indx] = color
-        img += newcoef
-    img /= n_tasks
-
-    return img
-
-
-def get_std_blurr(n_samples, n_tasks, width, nnz, snr=0., std=0.1, seed=0,
-                  downsampling_rate=2, overlap=0.,
-                  denoising=False, scaled=False, binary=False):
-    """Compute noise variance for gaussian design data.
-    """
-    theta = generate_dirac_images(width, n_tasks, nnz, seed=seed,
-                                  overlap=overlap, binary=binary)
-    theta = theta.reshape(-1, n_tasks)
-    n_features = width ** 2
-    # Create lists of training and target data Xk, Yk:
-    s = 0.
-    for t in range(n_tasks):
-        if denoising:
-            x = np.eye(n_samples)
-        else:
-            x = get_design_matrix(forwardop, n_samples=n_samples,
-                                  n_features=n_features, sigma=std,
-                                  r=downsampling_rate)
-            if scaled:
-                x /= x.std(axis=0)
-        y = x.dot(theta[:, t])
-        # sigma += np.linalg.norm(y) * 10 ** (- snr / 20) / np.sqrt(n_samples)
-        s += y.std() / snr
-    s /= n_tasks
-
-    return s
-
-
-def blurrdata(n_samples, theta, blurr_std=1., seed=None,
-              downsampling_rate=2, denoising=False, scaled=False,
-              sigma=1.):
-    """Generate multi-task regression data: blurring + downsampling.
-
-    Generates multi-task regression data: Triplet (X, Y, Theta)
-    according to the equation Yk = Xk.Thetak + eps for each task k
-    where eps is a random gaussian rv.
-
-    Xk are random gaussians matrices with a covariance matrices given by
-    toeplitz matrices. The correlation between features is controled by
-    the corr argument.
-
-    Parameters
-    ----------
-    n_samples: int
-        number of samples per task > 0.
-    theta: array, shape (n_features, n_tasks).
-        Each column is the regression coef of a task.
-    snr: float. (optional, default 0.)
-        Signal-noise-ratio in decibels.
-    sigmas: array of shape (n_tasks,)
-        Blurring Standard-deviation of each task.
-    denoising: bool (optional, False)
-        if True, denoising problem. All X == Identity.
-
-    Returns
-    -------
-    X: list of arrays
-        list of training arrays Xk of shape (n_samples, n_features)
-    Y: list of arrays
-        list of target arrays Yk of shape (n_samples,)
-
-    """
-    rnd = check_random_state(seed)
-    n_tasks_all = 20
-    n_features, n_tasks = theta.shape
-    # Create lists of training and target data Xk, Yk:
-    X, Y = [], []
-    if isinstance(sigma, float):
-        sigma = np.array(n_tasks * [sigma])
-    for t in range(n_tasks):
-        blurr_std_t = rnd.rand() * blurr_std + 0.5
-        if denoising:
-            x = np.eye(n_samples)
-        else:
-            x = get_design_matrix(forwardop, n_samples=n_samples,
-                                  n_features=n_features, sigma=blurr_std_t,
-                                  r=downsampling_rate)
-        if scaled:
-            x /= x.std(axis=0)
-        y = x.dot(theta[:, t])
-        X.append(x)
-        Y.append(y)
-
-    noise = rnd.randn(n_tasks_all, n_samples)
-    Y = np.array(Y)
-    X = np.array(X)
-    Y += sigma[:, None] * noise[:n_tasks] * Y.std(axis=1).max()
-
-    return X, Y
-
-
 def toeplitz_2d(width, corr=0.9, p=2):
     """Generate 2d toeplitz covariance matrix."""
     n_features = width ** 2
@@ -383,6 +175,68 @@ def get_std(n_samples, n_tasks, width, nnz, snr=0., corr=0.1, seed=None,
     s /= n_tasks
 
     return s
+
+
+def gaussian_design(n_samples, theta, corr=0.1, seed=None,
+                    denoising=False, scaled=True, sigma=1.):
+    """Generate multi-task regression data.
+
+    Generates multi-task regression data: Triplet (X, Y, Theta)
+    according to the equation Yk = Xk.Thetak + eps for each task k
+    where eps is a random gaussian rv.
+
+    Xk are random gaussians matrices with a covariance matrices given by
+    toeplitz matrices. The correlation between features is controled by
+    the corr argument.
+
+    Parameters
+    ----------
+    n_samples: int
+        number of samples per task > 0.
+    theta: array, shape (n_features, n_tasks).
+        Each column is the regression coef of a task.
+    snr: float. (optional, default 0.)
+        Signal-noise-ratio in decibels.
+    corr: float (optional, default 0.5)
+        Feature correlation parameter in [0, 1]
+    denoising: bool (optional, False)
+        if True, denoising problem. All X == Identity.
+    scaled: bool (optional, False)
+        if True, features are scaled to unit variance.
+
+    Returns
+    -------
+    X: list of arrays
+        list of training arrays Xk of shape (n_samples, n_features)
+    Y: list of arrays
+        list of target arrays Yk of shape (n_samples,)
+
+    """
+    rnd = np.random.RandomState(seed)
+    n_tasks_all = 20
+    noise = rnd.randn(n_tasks_all, n_samples)
+    n_features, n_tasks = theta.shape
+    width = int(n_features ** 0.5)
+    # Create lists of training and target data Xk, Yk:
+    X, Y = [], []
+
+    for t in range(n_tasks):
+        cov = toeplitz_2d(width, corr=corr)
+        if denoising:
+            x = np.eye(n_samples)
+        else:
+            x = rnd.multivariate_normal(np.zeros(n_features),
+                                        cov=cov, size=n_samples)
+            if scaled:
+                x /= x.std(axis=0)
+        y = x.dot(theta[:, t])
+        X.append(x)
+        Y.append(y)
+
+    Y = np.array(Y)
+    Y += sigma * noise[:n_tasks] * Y.std(axis=1).max()
+
+    return np.array(X), Y
 
 
 def median(x):
@@ -498,7 +352,6 @@ def gengaussians(n_features, n_hists, loc=None, scale=None, normed=False,
     Returns
     -------
     array-like (n_features, n_hists).
-fr
     """
     if loc is None:
         loc = np.zeros(n_hists)
@@ -671,9 +524,9 @@ def auc_prc(coefs_true, coefs_pred, precision=0, mean=True):
         warnings.warn("TRUE COEFS ARE ALL ZERO !")
         return 0.
     auc = 0.
-    y_true = (coefs_true > precision).astype(int)
+    y_true = (abs(coefs_true) > precision).astype(int)
     if mean:
-        for y_t, y_p in zip(y_true.T, coefs_pred.T):
+        for y_t, y_p in zip(y_true.T, abs(coefs_pred.T)):
             auc += average_precision_score(y_t, y_p)
         auc /= coefs_true.shape[1]
     else:
@@ -683,7 +536,7 @@ def auc_prc(coefs_true, coefs_pred, precision=0, mean=True):
     return auc
 
 
-def inspector_mtw(obj_fun, x_real, rescaling=1., verbose=False, rate=50,
+def inspector_mtw(x_real, rescaling=1., verbose=False, rate=50,
                   precision=0, prc_only=False):
     """Constructs callaback closure for MTW estimator.
 
@@ -692,8 +545,6 @@ def inspector_mtw(obj_fun, x_real, rescaling=1., verbose=False, rate=50,
 
     Parameters
     ----------
-    obj_fun : callable.
-        Objective function of the optimization problem.
     x_real : array, shape (n_features, n_tasks).
         optimal coefs.
     x_bar : array, shape (n_features).
@@ -710,13 +561,10 @@ def inspector_mtw(obj_fun, x_real, rescaling=1., verbose=False, rate=50,
     cstrs = []
     it = [0]
 
-    def inspector_cl(xk, x_bar, v=None):
+    def inspector_cl(xk, v=None):
         """Nested function."""
         if not prc_only:
-            if v is None:
-                obj = obj_fun(xk, x_bar)
-            else:
-                obj = v
+            obj = v
             err = ((xk / rescaling - x_real) ** 2).mean()
             err /= max((xk / rescaling).max(), x_real.max(), 1)
             objectives.append(obj)
@@ -833,37 +681,6 @@ def set_grid(ax):
     # Or if you want different settings for the grids:
     ax.grid(which='minor', alpha=0.2)
     ax.grid(which='major', alpha=0.5)
-
-
-def dirty_grid_plot(alphas, betas, besta, bestb, n_tasks):
-    """Plot dirty grid cross-val"""
-    from matplotlib import pyplot as plt
-    plt.figure(figsize=(8, 8))
-    xx = np.linspace(0, max(betas), 100)
-    xx2 = np.linspace(0, max(alphas), 100)
-
-    yy = xx2 / n_tasks ** 0.5
-    plt.plot(xx, [max(betas)] * 100, color='r', alpha=0.5)
-    plt.plot([max(alphas)] * 100, xx, color='r', alpha=0.5)
-
-    plt.scatter(alphas, betas, s=12, label='Sampled hyperparamters')
-    plt.scatter([besta], [bestb], color='r',
-                s=30, label=r"Best $(\alpha, \beta)$")
-    plt.plot(xx, xx, '--', color='k', label="Triangle borders")
-    plt.plot(xx2, yy, '--', color='k')
-    xticks, xlabels = plt.xticks()
-    xlabels = [i for i in xlabels]
-    xlabels[-2] = r"$\alpha_{max}$"
-    yticks, ylabels = plt.yticks()
-    ylabels = [i for i in ylabels]
-    ylabels[-2] = r"$\beta_{max}$"
-    plt.xticks(xticks, xlabels, fontsize=15)
-    plt.yticks(yticks, ylabels, fontsize=15)
-    plt.xlabel(r"$\alpha - \ell_{21}$ penalty", fontsize=15)
-    plt.ylabel(r"$\beta - \ell_1$ penalty", fontsize=15)
-    plt.legend(fontsize=15)
-    plt.title("Dirty model + MTGL gridsearch", fontsize=22)
-    plt.show()
 
 
 @jit(float64(float64[::1, :]), nopython=True, cache=True)

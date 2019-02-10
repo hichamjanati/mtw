@@ -1,9 +1,4 @@
-"""
-Multitask Learning module for Python
-====================================
-
-"""
-from . import MTW
+from .mtw import MTW
 
 
 __all__ = ['MTW']
