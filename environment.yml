@@ -5,6 +5,7 @@ dependencies:
     - ipython
     - joblib>=0.12.5
     - numpy>=1.12
+    - numba>=0.40.1
     - seaborn>=0.7
     - scipy>=0.18.0
     - matplotlib>=2.0.0
