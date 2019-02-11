@@ -64,6 +64,7 @@ If you use this code, please cite:
     @InProceedings{janati19a,
     author={Hicham Janati and Marco Cuturi and Alexandre Gramfort},
     title={Wasserstein regularization for sparse multi-task regression},
+    booktitle = {Proceedings of the Twenty-second International Conference on Artificial Intelligence and Statistics},
     year = 	 {2019},
     volume = 	 {89},
     series = 	 {Proceedings of Machine Learning Research},
