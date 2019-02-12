@@ -1,0 +1,27 @@
+language: python
+
+env:
+  - PYTHON_VERSION=3.6
+
+before_install:
+  - wget -q http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b -p /home/travis/miniconda
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes --quiet conda
+  - conda env create --file environment.yml python=${PYTHON_VERSION}
+  - source activate mtw-env
+  - conda install --yes --quiet pytest pytest-cov coverage
+  - pip install flake8 check-manifest
+  - pip install codecov
+
+install:
+  - python setup.py build_ext --inplace
+  - pip install -e .
+
+script:
+  - pytest -lv --cov-report term-missing mtw --cov=mtw --cov-config .coveragerc
+  - flake8 --count mtw
+
+after_success:
+  - codecov
