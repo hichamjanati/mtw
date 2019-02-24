@@ -4,8 +4,8 @@
 *.o
 
 # Python precompilation
-*pyc
-
+*.pyc
+*.pyx
 
 # cache
 .pytest_cache/*
