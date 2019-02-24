@@ -3,8 +3,6 @@
 import numpy as np
 import warnings
 from . import utils
-from ot import emd2
-
 
 try:
     import cupy as cp
@@ -12,22 +10,6 @@ try:
 except ImportError:
     def get_module(x):
         return np
-
-
-def emd(x, y, M):
-    n_tasks = x.shape[-1]
-    assert x.shape == y.shape
-    assert len(x) == len(M)
-    if not y.max(0).all():
-        return 1e100
-    x = x / x.sum(axis=0)
-    y = y / y.sum(axis=0)
-    f = 0.
-    for a, b in zip(x.T, y.T):
-        a = np.ascontiguousarray(a)
-        b = np.ascontiguousarray(b)
-        f += emd2(a, b, M)
-    return f / n_tasks
 
 
 def barycenterkl_log(P, M, epsilon, gamma, b=None, tol=1e-4,
