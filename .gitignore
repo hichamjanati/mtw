@@ -2,9 +2,8 @@
 *.cpp
 *.so
 *.o
-
-# Python precompilation
 *.pyc
+*.c
 
 # cache
 .pytest_cache/*
@@ -12,3 +11,8 @@ mtw/__pycache__/
 
 .DS_Store
 MANIFEST
+
+# doc
+doc/_build/
+doc/auto_examples/
+doc/generated/

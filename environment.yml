@@ -2,6 +2,7 @@ name: mtw-env
 
 
 dependencies:
+    - cython
     - ipython
     - joblib>=0.12.5
     - numpy>=1.12

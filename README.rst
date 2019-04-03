@@ -4,7 +4,7 @@
 .. |Travis| image:: https://travis-ci.com/hichamjanati/mtw.svg?branch=master
 .. _Travis: https://travis-ci.com/hichamjanati/mtw
 
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/4qrnsuohh5g53i5u?svg=true
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/l7g6vywwwuyha49l?svg=true
 .. _AppVeyor: https://ci.appveyor.com/project/hichamjanati/mtw
 
 .. |Codecov| image:: https://codecov.io/gh/hichamjanati/mtw/branch/master/graph/badge.svg
