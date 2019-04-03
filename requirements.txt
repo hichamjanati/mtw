@@ -3,3 +3,4 @@ scipy
 cython
 numba
 joblib
+scikit-learn

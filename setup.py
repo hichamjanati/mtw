@@ -16,7 +16,8 @@ extensions = [
     ),
 ]
 
-INSTALL_REQUIRES = ['numpy', 'scipy', 'cython', 'joblib', 'numba']
+INSTALL_REQUIRES = ['numpy', 'scipy', 'cython', 'joblib', 'numba',
+                    'scikit-learn']
 
 EXTRAS_REQUIRE = {
     'tests': [
