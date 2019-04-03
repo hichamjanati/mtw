@@ -33,6 +33,6 @@ test_script:
   - pytest -v --cov=mtw --pyargs mtw
 
 after_test:
-  - cp .coverage %APPVEYOR_BUILD_FOLDER%
-  - cd %APPVEYOR_BUILD_FOLDER%
-  - codecov
+  # - cp .coverage %APPVEYOR_BUILD_FOLDER%
+  # - cd %APPVEYOR_BUILD_FOLDER%
+  # - codecov
