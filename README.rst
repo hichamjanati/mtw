@@ -1,8 +1,8 @@
 
 |Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_
 
-.. |Travis| image:: https://travis-ci.org/hichamjanati/mtw.svg?branch=master
-.. _Travis: https://travis-ci.org/hichamjanati/mtw
+.. |Travis| image:: https://travis-ci.com/hichamjanati/mtw.svg?branch=master
+.. _Travis: https://travis-ci.com/hichamjanati/mtw
 
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/4qrnsuohh5g53i5u?svg=true
 .. _AppVeyor: https://ci.appveyor.com/project/hichamjanati/mtw
