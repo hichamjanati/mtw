@@ -26,7 +26,8 @@ install:
   - conda activate mtw-env
   - conda install pip
   - pip install codecov pytest pytest-cov
-  - pip install .
+  - python setup.py build_ext --inplace
+  - pip install -e .
 
 test_script:
   - pytest -v --cov=mtw --pyargs mtw
