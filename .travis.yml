@@ -1,14 +1,31 @@
+dist: trusty
+sudo: false
+
 language: python
 
-env:
-  - PYTHON_VERSION=3.6
+cache:
+  directories:
+  - $HOME/.cache/pip
+
+matrix:
+  include:
+    - env: PYTHON_VERSION="3.5" NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
+           SKLEARN_VERSION="0.19.1"
+    - env: PYTHON_VERSION="3.6" NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
+           SKLEARN_VERSION="0.19.1"
+    - env: PYTHON_VERSION="3.7" NUMPY_VERSION="*" SCIPY_VERSION="*"
+           SKLEARN_VERSION="*"
 
 before_install:
-  - wget -q http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b -p /home/travis/miniconda
-  - export PATH=/home/travis/miniconda/bin:$PATH
+  # install miniconda
+  - deactivate
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - MINICONDA_PATH=/home/travis/miniconda
+  - chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+  - export PATH=$MINICONDA_PATH/bin:$PATH
   - conda update --yes --quiet conda
+
+  # create the testing environment
   - conda env create --file environment.yml python=${PYTHON_VERSION}
   - source activate mtw-env
   - conda install --yes --quiet pytest pytest-cov coverage
@@ -20,8 +37,8 @@ install:
   - pip install -e .
 
 script:
-  - pytest -lv --cov-report term-missing mtw --cov=mtw --cov-config .coveragerc
-  - flake8 --count mtw
+  - pytest -v --cov=mtw --pyargs mtw
 
 after_success:
-  - codecov
+  - cp .coverage $TRAVIS_BUILD_DIR
+  - codecov --root $TRAVIS_BUILD_DIR || echo "codecov upload failed"

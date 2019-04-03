@@ -1,3 +1,21 @@
+
+|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_
+
+.. |Travis| image:: https://travis-ci.org/hichamjanati/mtw.svg?branch=master
+.. _Travis: https://travis-ci.org/hichamjanati/mtw
+
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/4qrnsuohh5g53i5u?svg=true
+.. _AppVeyor: https://ci.appveyor.com/project/hichamjanati/mtw
+
+.. |Codecov| image:: https://codecov.io/gh/hichamjanati/mtw/branch/master/graph/badge.svg
+.. _Codecov: https://codecov.io/gh/hichamjanati/mtw
+
+.. |CircleCI| image:: https://circleci.com/gh/hichamjanati/mtw.svg?style=svg
+.. _CircleCI: https://circleci.com/gh/hichamjanati/mtw/tree/master
+
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/mtw/badge/?version=latest
+.. _ReadTheDocs: https://mtw.readthedocs.io/en/latest/?badge=latest
+
 Multi-task Wasserstein (mtw)
 ============================
 
