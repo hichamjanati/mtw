@@ -16,9 +16,26 @@ extensions = [
     ),
 ]
 
+INSTALL_REQUIRES = ['numpy', 'scipy', 'cython']
+
+EXTRAS_REQUIRE = {
+    'tests': [
+        'pytest',
+        'pytest-cov'],
+    'docs': [
+        'sphinx',
+        'sphinx-gallery',
+        'sphinx_rtd_theme',
+        'numpydoc',
+        'matplotlib'
+    ]
+}
+
 if __name__ == "__main__":
     setup(name="mtw",
           packages=find_packages(),
           ext_modules=cythonize(extensions),
-          include_dirs=[numpy.get_include()]
+          include_dirs=[numpy.get_include()],
+          install_requires=INSTALL_REQUIRES,
+          extras_require=EXTRAS_REQUIRE,
           )
