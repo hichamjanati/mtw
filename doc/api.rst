@@ -1,16 +1,15 @@
-####################
-project-template API
-####################
+#######
+MTW API
+#######
 
-This is an example on how to document the API of your own project.
 
 .. currentmodule:: mtw
 
-MNE-Template
-============
+MTW
+===
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
-   Some text
+   mtw
