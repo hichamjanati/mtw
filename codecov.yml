@@ -9,8 +9,7 @@ coverage:
         threshold: 0.01
     patch: false
     changes: false
-  ignore:
-    - "examples/download_preprocess_finance.py"
+  # ignore:
 
 comment:
   layout: "header, diff, sunburst, uncovered"
