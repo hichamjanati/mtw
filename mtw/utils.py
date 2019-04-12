@@ -57,22 +57,6 @@ def check_random_state(seed):
                      ' instance' % seed)
 
 
-def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
-                  n_targets=1, positive=False):
-    """
-    build an ill-posed linear regression problem with many noisy features
-    and comparatively few samples
-    """
-    random_state = np.random.RandomState(0)
-    w = random_state.randn(n_features, n_targets)
-    if positive:
-        w = np.abs(w)
-    w[n_informative_features:] = 0.0
-    X = random_state.randn(n_samples, n_features)
-    y = np.dot(X, w)
-    return X, y, w
-
-
 def generate_dirac_images(width, n_tasks, nnz, seed=None,
                           overlap=0.5, binary=False, positive=False):
     """Generate dirac images."""
@@ -325,120 +309,51 @@ def groundmetric2d(n_features, p=1, normed=False):
     return M
 
 
-def gengaussians(n_features, n_hists, loc=None, scale=None, normed=False,
-                 xlim=[-5, 5], mass=None):
-    """Generate random gaussian histograms.
-
-    Parameters
-    ----------
-    n_features: int.
-        dimensionality of histograms.
-    n_hists: int.
-        number of histograms.
-    loc: array-like (n_hists,)
-        Gaussian means vector, zeros by default.
-    scale: array-like (n_hists,)
-        Gaussian std vector, ones by default.
-    normed: boolean.
-        if True, each measure is normalized to sum to 1.
-    xlim: tuple of floats.
-        delimiters of the grid on which the gaussian density is computed.
-    mass: array-like (n_hists,)
-        positive mass of each measure (ones by default)
-        overruled if `normed` is True.
-    seed: int.
-        random state.
-
-    Returns
-    -------
-    array-like (n_features, n_hists).
-    """
-    if loc is None:
-        loc = np.zeros(n_hists)
-    if scale is None:
-        scale = np.ones(n_hists)
-    if mass is None:
-        mass = np.ones(n_hists)
-    xs = np.linspace(xlim[0], xlim[1], n_features)
-
-    coefs = np.empty((n_features, n_hists))
-    for i, (l, s) in enumerate(zip(loc, scale)):
-        coefs[:, i] = gaussian.pdf(xs, loc=l, scale=s)
-
-    if normed:
-        mass = 1
-
-    coefs /= (coefs.sum(axis=0) / mass)
-
-    return coefs
+# def kl(p, q):
+#     """Compute Kullback-Leibler divergence.
+#
+#     Compute the element-wise sum of:
+#     `p * log(p / q) + p - q`.
+#
+#     Parameters
+#     ----------
+#     p: array-like.
+#         must be positive.
+#     q: array-like.
+#         must be positive, same shape and dimension of `p`.
+#
+#     """
+#     xp = get_module(p)
+#     logpq = np.zeros_like(p)
+#     logpq[p > 0] = xp.log(p[p > 0] / (q[p > 0] + 1e-300))
+#     kl = (p * logpq + q - p).sum()
+#
+#     return kl
+#
+#
+# def wklobjective0(plan, p, q, K, epsilon, gamma):
+#     """Compute unbalanced ot objective function naively."""
+#     f = epsilon * kl(plan, K)
+#     margs = kl(plan.sum(axis=1), p) + kl(plan.sum(axis=0), q)
+#     f += gamma * margs
+#
+#     return f
 
 
-def check_zeros(P, q, M, threshold=0):
-    """Remove zero-entries.
-
-    Parameters
-    ----------
-    P: array-like (n_features, n_hists)
-        postive histograms stacked as columns.
-    q: array-like (n_features,)
-        positive reference histogram.
-    M: array-like (n_features, n_features)
-        cost matrix.
-
-    """
-    left = P.reshape(len(P), -1).any(axis=-1) > threshold
-    right = q > threshold
-    M2 = M[left, :][:, right]
-    P2 = P[left]
-    q2 = q[right]
-    return P2, q2, M2
-
-
-def kl(p, q):
-    """Compute Kullback-Leibler divergence.
-
-    Compute the element-wise sum of:
-    `p * log(p / q) + p - q`.
-
-    Parameters
-    ----------
-    p: array-like.
-        must be positive.
-    q: array-like.
-        must be positive, same shape and dimension of `p`.
-
-    """
-    xp = get_module(p)
-    logpq = np.zeros_like(p)
-    logpq[p > 0] = xp.log(p[p > 0] / (q[p > 0] + 1e-300))
-    kl = (p * logpq + q - p).sum()
-
-    return kl
-
-
-def wklobjective0(plan, p, q, K, epsilon, gamma):
-    """Compute unbalanced ot objective function naively."""
-    f = epsilon * kl(plan, K)
-    margs = kl(plan.sum(axis=1), p) + kl(plan.sum(axis=0), q)
-    f += gamma * margs
-
-    return f
-
-
-def wklobjective_log(a, Kb, p, q, Ksum, epsilon, gamma):
-    """Compute unbalanced ot objective function for solver monitoring."""
-    xp = get_module(a)
-    n_hists = 1
-    if a.ndim > 2:
-        n_hists = a.shape[-1]
-
-    aKb = xp.exp(a + Kb)
-    f = gamma * kl(aKb, p)
-    f += (aKb * (epsilon * a - epsilon - gamma)).sum()
-    f += n_hists * epsilon * Ksum
-    f += n_hists * gamma * q.sum()
-
-    return f
+# def wklobjective_log(a, Kb, p, q, Ksum, epsilon, gamma):
+#     """Compute unbalanced ot objective function for solver monitoring."""
+#     xp = get_module(a)
+#     n_hists = 1
+#     if a.ndim > 2:
+#         n_hists = a.shape[-1]
+#
+#     aKb = xp.exp(a + Kb)
+#     f = gamma * kl(aKb, p)
+#     f += (aKb * (epsilon * a - epsilon - gamma)).sum()
+#     f += n_hists * epsilon * Ksum
+#     f += n_hists * gamma * q.sum()
+#
+#     return f
 
 
 def wklobjective_converged(qsum, f0, plansum, epsilon, gamma):
@@ -449,54 +364,18 @@ def wklobjective_converged(qsum, f0, plansum, epsilon, gamma):
 
     return obj
 
-
-def wklobjective(a, Kb, p, q, Ksum, epsilon, gamma, u=0):
-    """Compute unbalanced ot objective function for solver monitoring."""
-    xp = get_module(a)
-    n_hists = 1
-    aKb = a * Kb
-    f = gamma * kl(aKb, p)
-    f += (aKb * (epsilon * xp.log(a + 1e-300) + u - epsilon - gamma)).sum()
-    f += n_hists * epsilon * Ksum
-    f += n_hists * gamma * q.sum()
-
-    return f
-
-
-def wklobjective2(a, b, Kb, Ka, p, q, Ksum, epsilon, gamma, u=0, v=0):
-    """Compute unbalanced ot objective function for solver monitoring."""
-    xp = get_module(a)
-    aKb = a * Kb
-    bKa = b * Ka
-    f = gamma * kl(aKb, p)
-    f += gamma * kl(bKa, q)
-    f += aKb.dot(epsilon * xp.log(a + 1e-100) + u)
-    f += bKa.dot(epsilon * xp.log(b + 1e-100) + v)
-    f += epsilon * (Ksum - aKb.sum())
-
-    return f
-
-
-def metricmedian(n_features):
-    """Compute median of euclidean cost matrix.
-
-    Parameters
-    ----------
-    n_features: int.
-        size of histograms.
-
-    Returns
-    -------
-    median: float.
-        median of pairwise distance matrix M.
-
-    """
-    m = - np.sqrt(0.5 * n_features ** 2 + n_features - 0.25)
-    m += 0.5 + n_features
-    m = int(m)
-    median = m ** 2
-
-    return median
+#
+# def wklobjective(a, Kb, p, q, Ksum, epsilon, gamma, u=0):
+#     """Compute unbalanced ot objective function for solver monitoring."""
+#     xp = get_module(a)
+#     n_hists = 1
+#     aKb = a * Kb
+#     f = gamma * kl(aKb, p)
+#     f += (aKb * (epsilon * xp.log(a + 1e-300) + u - epsilon - gamma)).sum()
+#     f += n_hists * epsilon * Ksum
+#     f += n_hists * gamma * q.sum()
+#
+#     return f
 
 
 def auc_prc(coefs_true, coefs_pred, precision=0, mean=True):
@@ -684,19 +563,6 @@ def set_grid(ax):
 
 
 @jit(float64(float64[::1, :]), nopython=True, cache=True)
-def l21norm(theta):
-    """Compute L21 norm."""
-    n_features, n_tasks = theta.shape
-    out = 0.
-    for j in range(n_features):
-        l2 = 0.
-        for t in range(n_tasks):
-            l2 += theta[j, t] ** 2
-        out += np.sqrt(l2)
-    return out
-
-
-@jit(float64(float64[::1, :]), nopython=True, cache=True)
 def l1norm(theta):
     """Compute L1 norm."""
     n_features, n_tasks = theta.shape
@@ -718,72 +584,3 @@ def residual(X, theta, y):
     for t in range(n_tasks):
         R[t] = y[t] - X[t].dot(theta[:, t])
     return R
-
-
-def scatter_coefs(coefs, ax, colors, radiuses, title='', legend=True,
-                  facecolors='none', marker='o'):
-    w, w, n = coefs.shape
-    for k in range(n):
-        coef = coefs[:, :, k]
-        xx, yy = np.where(coef != 0.)
-        ax.scatter(xx, yy, s=radiuses[k], facecolors=facecolors,
-                   edgecolors=colors[k], lw=1.5, marker=marker,
-                   label="Task %d" % (k + 1))
-        ax.set_ylim([0, w])
-        ax.set_xlim([0, w])
-    if legend:
-        ax.legend()
-    ax.set_title(title)
-    set_grid(ax)
-    return ax
-
-
-def contour_coefs(coef, ax, cmaps, title=''):
-    w, w, n = coef.shape
-    for i, cmap in enumerate(cmaps[:n]):
-        m2 = coef[:, :, i].max()
-
-        if m2:
-            levels = np.logspace(-4, 0., 4) * m2
-            ax.contourf(coef[:, :, i].T, cmap=cmap,
-                        antialiased=False, alpha=0.6,
-                        levels=levels, origin='lower')
-        else:
-            ax.contour(coef[:, :, i].T, cmap=cmap,
-                       antialiased=True, alpha=0.6,
-                       levels=[0], vmax=1., origin='lower')
-        ax.set_ylim([0, w])
-        ax.set_xlim([0, w])
-    ax.set_title(title)
-    set_grid(ax)
-
-
-def linear_mt(X, coefs):
-    signal = np.array([x.dot(c) for x, c in zip(X, coefs.T)])
-    return signal
-
-
-def oracle_error(X, y, coefs_flat):
-    """Compute oracle prediction error."""
-    signal = np.array([x.dot(c) for x, c in zip(X, coefs_flat.T)])
-    err = ((y - signal) ** 2).mean()
-    return err
-
-
-def get_snrs(X, Y, coefs):
-    signal = [x.dot(coef) for x, coef in zip(X, coefs.T)]
-    snrs = [np.linalg.norm(s) / np.linalg.norm(yy - s)
-            for s, yy in zip(signal, Y)]
-    return snrs
-
-
-def mll_loss(X, y, C, S, alpha, beta):
-
-    n_tasks, n_samples, n_features = X.shape
-    theta = C[:, None] * S
-    signal = np.array([x.dot(coef) for x, coef in zip(X, theta.T)])
-    ll = 0.5 * np.linalg.norm(y - signal) ** 2 / n_samples
-    ll += alpha * C.sum()
-    ll += beta * abs(S).sum()
-
-    return ll
