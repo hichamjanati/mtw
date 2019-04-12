@@ -213,3 +213,42 @@ class MTW:
         metrics = dict(auc=auc / i, mse=-mse / i, ot=-ot / i, aucabs=aucabs,
                        otabs=-otabs)
         return metrics
+
+    def get_params_grid(self, X, Y, cv_size=10, eps=0.01,
+                        alpha_range=(1., 500.), alphas=None, betas=None):
+        X, Y = self._pre_fit(X, Y)
+
+        xty = np.array([x.T.dot(y) for (x, y) in zip(X, Y)])
+        if not self.positive:
+            xty = abs(xty)
+        betamax = xty.max(axis=1).min() / Y.shape[-1]
+        if self.sigma0:
+            sigma00 = np.linalg.norm(Y, axis=1).min()
+            sigma00 /= (Y.shape[-1] ** 0.5)
+            betamax /= sigma00
+        self.betamax = betamax
+        alphamax, alphamin = alpha_range
+        params_grid = []
+        if betas is None:
+            betas = np.logspace(np.log10(eps), 0., 2 * cv_size)
+        else:
+            betas = np.array(betas)
+        betas *= betamax
+        if alphas is None:
+            alphas = np.r_[0., np.logspace(np.log10(alphamin),
+                                           np.log10(alphamax),
+                                           cv_size // 2)]
+        else:
+            alphas = np.array(alphas)
+        alphas /= Y.shape[-1]
+
+        params_grid_print = []
+        for i, this_beta in enumerate(betas[::-1]):
+            for this_alpha in alphas[::(- 1) ** i]:
+                params_grid += [(this_alpha, this_beta)]
+                b = this_beta / betamax
+                a = this_alpha * Y.shape[-1]
+                params_grid_print += [(a, b)]
+        self.params_grid_print = params_grid_print
+
+        return [{"alpha": a, "beta": b} for a, b in params_grid]
