@@ -60,8 +60,10 @@ and (n_tasks, n_samples)
 .. code:: python
 
    >>> from mtw import MTW
-   >>> epsilon = 0.01
-   >>> mtw = MTW(M= - M / eps, epsilon=eps)
+   >>> epsilon = 1 / len(M)
+   >>> alpha = 0.1
+   >>> beta = 0.1
+   >>> mtw = MTW(alpha=alpha, beta=beta, M=M, epsilon=eps)
    >>> mtw.fit(X, y)
    >>> coefs = mtw.coefs_
 

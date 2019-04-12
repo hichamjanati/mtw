@@ -54,7 +54,7 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
     t_cd = []
     t_ot = 0.
     xp = utils.set_module(gpu)
-    M = xp.asarray(M)
+    M = xp.asarray(- M / epsilon)
 
     thetabar1 = np.ones_like(coefs01).mean(axis=-1)
     thetabar2 = np.ones_like(coefs02).mean(axis=-1)

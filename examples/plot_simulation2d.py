@@ -40,7 +40,6 @@ X, Y = utils.gaussian_design(n_samples, coefs_flat, corr=0.95, sigma=std,
 epsilon = 2.5 / n_features
 M = utils.groundmetric2d(n_features, p=2, normed=True)
 gamma = utils.compute_gamma(0.8, M)
-M_ = - M / epsilon
 
 # set hyperparameters and fit MTW
 betamax = np.array([x.T.dot(y) for x, y in zip(X, Y)]).max() / n_samples
@@ -54,7 +53,7 @@ callback_options = {'callback': False,
                     'verbose': False, 'rate': 1}
 
 print("Fitting MTW model...")
-mtw = MTW(M=M_, alpha=alpha, beta=beta, sigma0=0., positive=positive,
+mtw = MTW(M=M, alpha=alpha, beta=beta, sigma0=0., positive=positive,
           epsilon=epsilon, gamma=gamma, stable=False, tol_ot=1e-6, tol=1e-4,
           maxiter_ot=10, maxiter=2000, n_jobs=n_tasks,
           gpu=False, **callback_options)
