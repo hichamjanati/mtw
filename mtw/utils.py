@@ -584,3 +584,23 @@ def residual(X, theta, y):
     for t in range(n_tasks):
         R[t] = y[t] - X[t].dot(theta[:, t])
     return R
+
+
+def contour_coefs(coef, ax, cmaps, title=''):
+    w, w, n = coef.shape
+    for i, cmap in enumerate(cmaps[:n]):
+        m2 = coef[:, :, i].max()
+
+        if m2:
+            levels = np.logspace(-4, 0., 4) * m2
+            ax.contourf(coef[:, :, i].T, cmap=cmap,
+                        antialiased=False, alpha=0.6,
+                        levels=levels, origin='lower')
+        else:
+            ax.contour(coef[:, :, i].T, cmap=cmap,
+                       antialiased=True, alpha=0.6,
+                       levels=[0], vmax=1., origin='lower')
+        ax.set_ylim([0, w])
+        ax.set_xlim([0, w])
+    ax.set_title(title)
+    set_grid(ax)
