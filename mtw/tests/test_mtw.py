@@ -56,7 +56,7 @@ def test_mtw_convolution():
                         'verbose': True, 'rate': 1, 'prc_only': False}
 
     # mtw_model using convolutions to compute OT barycenters
-    mtw_model = MTW(M=-M / epsilon, alpha=alpha, beta=beta, epsilon=epsilon,
+    mtw_model = MTW(M=M, alpha=alpha, beta=beta, epsilon=epsilon,
                     gamma=gamma, stable=stable, tol_ot=1e-8, tol=1e-5,
                     maxiter_ot=200, maxiter=5000, **callback_options,
                     positive=True)
@@ -66,7 +66,7 @@ def test_mtw_convolution():
 
     M = Mbig / m
     # mtw_model using standard sinkhorn
-    mtw_model2 = MTW(M=-M / epsilon, alpha=alpha, beta=beta, epsilon=epsilon,
+    mtw_model2 = MTW(M=M, alpha=alpha, beta=beta, epsilon=epsilon,
                      gamma=gamma, stable=stable, tol_ot=1e-8, tol=1e-5,
                      maxiter_ot=200, maxiter=5000, **callback_options,
                      positive=True)
