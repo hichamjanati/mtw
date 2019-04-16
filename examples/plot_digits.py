@@ -25,11 +25,12 @@ seed = 42
 rnd = np.random.RandomState(seed)
 
 # set n_samples
-n_samples = 10
+n_samples = 5
 n_features = 240
 
 # take only 3 tasks to run example fast
-tasks = [0, 1, 2]
+tasks = [0, 1, 2, 4, 5, 6]
+tasks = [0, 6]
 n_tasks = len(tasks)
 mtgl_only = False
 positive = False
@@ -51,7 +52,7 @@ yraw = yraw.reshape(10, 10, 200)
 # learner and split it into a cv and validation set
 # Here the design matrix X is the same for all tasks
 
-samples = np.arange(50)
+samples = np.arange(200)
 samples = rnd.permutation(samples)[:n_samples]
 mask_valid = np.ones(200).astype(bool)
 mask_valid[samples] = False
