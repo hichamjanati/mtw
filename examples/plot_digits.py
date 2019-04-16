@@ -87,28 +87,28 @@ mtw = MTW(M=M_, epsilon=epsilon, gamma=gamma, positive=positive,
           stable=False, tol_ot=1e-5, maxiter_ot=15, tol=1e-4,
           tol_cd=1e-4, maxiter=1000)
 params_grid = mtw.get_params_grid(Xcv, ycv)
-
+best_params = params_grid[0]
 # do 2 folds cross validation based on classification error
 
-cv = 2
-cv = check_cv(cv=cv)
+# cv = 2
+# cv = check_cv(cv=cv)
 
-scores = np.empty((cv.n_splits, len(params_grid), n_tasks))
+# scores = np.empty((cv.n_splits, len(params_grid), n_tasks))
 
-for i_fold, (train, test) in enumerate(cv.split(Xcv[0], ycv[0])):
-    print(" -> %d / %d" % (i_fold + 1, cv.n_splits))
-    for i_param, params in enumerate(params_grid):
-        mtw.set_params(params)
-        mtw.fit(Xcv[:, train], ycv[:, train])
-        scores[i_fold, i_param, :] = mtw.cv_score(Xcv[:, test],
-                                                  ycv[:, test],
-                                                  classification=True)
-    mtw.reset()
-
-    mean_scores = np.mean(scores, axis=0)  # n_params x n_tasks
-    tmp = np.mean(mean_scores, axis=1)  # average across tasks
-    assert len(tmp) == len(params_grid)
-    best_params = params_grid[np.argmax(tmp)]
+# for i_fold, (train, test) in enumerate(cv.split(Xcv[0], ycv[0])):
+#     print(" -> %d / %d" % (i_fold + 1, cv.n_splits))
+#     for i_param, params in enumerate(params_grid):
+#         mtw.set_params(params)
+#         mtw.fit(Xcv[:, train], ycv[:, train])
+#         scores[i_fold, i_param, :] = mtw.cv_score(Xcv[:, test],
+#                                                   ycv[:, test],
+#                                                   classification=True)
+#     mtw.reset()
+#
+#     mean_scores = np.mean(scores, axis=0)  # n_params x n_tasks
+#     tmp = np.mean(mean_scores, axis=1)  # average across tasks
+#     assert len(tmp) == len(params_grid)
+#     best_params = params_grid[np.argmax(tmp)]
 
 mtw.set_params(best_params)
 mtw.fit(Xcv, ycv)
