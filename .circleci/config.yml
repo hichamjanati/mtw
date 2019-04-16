@@ -17,6 +17,7 @@ jobs:
             source activate mtw-env
             conda install --yes pip numpy scipy scikit-learn matplotlib sphinx sphinx_rtd_theme numpydoc pillow
             pip install sphinx-gallery
+            pip install download
             python setup.py build_ext --inplace
             pip install -e .
             cd doc

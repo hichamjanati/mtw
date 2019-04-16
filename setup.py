@@ -29,7 +29,6 @@ EXTRAS_REQUIRE = {
         'sphinx_rtd_theme',
         'numpydoc',
         'matplotlib',
-        'download'
     ]
 }
 
