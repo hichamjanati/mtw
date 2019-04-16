@@ -216,8 +216,6 @@ class MTW:
 
     def get_params_grid(self, X, Y, cv_size=10, eps=0.01,
                         alpha_range=(1., 500.), alphas=None, betas=None):
-        X, Y = self._pre_fit(X, Y)
-
         xty = np.array([x.T.dot(y) for (x, y) in zip(X, Y)])
         if not self.positive:
             xty = abs(xty)
