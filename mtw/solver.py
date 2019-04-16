@@ -92,6 +92,8 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
             t_cd.append(time() - t)
             log["t_cd"] = sum(t_cd)
             log['loss'].append(obj)
+            log['dloss'].append(0)
+
             if callback:
                 callback(theta, v=obj)
 

@@ -3,7 +3,7 @@
 MTW synthetic images
 ====================
 
-The example generates 3 synthetic sparse images (as regression coefficients)
+This example generates 3 synthetic sparse images (as regression coefficients)
 which are fed to random gaussian matrices X. Increasing the Wasserstein
 hyperparameter increases consistency across regression coefficients.
 """
@@ -38,11 +38,13 @@ std = 0.25
 X, Y = gaussian_design(n_samples, coefs_flat, corr=0.95, sigma=std,
                        scaled=True, seed=seed)
 
+###############################################################################
 # set ot params
 epsilon = 2.5 / n_features
 M = utils.groundmetric2d(n_features, p=2, normed=True)
 gamma = utils.compute_gamma(0.8, M)
 
+###############################################################################
 # set hyperparameters and fit MTW
 betamax = np.array([x.T.dot(y) for x, y in zip(X, Y)]).max() / n_samples
 alpha = 10. / n_samples
@@ -61,8 +63,9 @@ mtw = MTW(M=M, alpha=alpha, beta=beta, sigma0=0., positive=positive,
           gpu=False, **callback_options)
 mtw.fit(X, Y)
 
-"""Now we plot the 3 images on top of each other (True), the MTW fitted
-coefficients and their latent Wasserstein barycenter"""
+###############################################################################
+# Now we plot the 3 images on top of each other (True), the MTW fitted
+# coefficients and their latent Wasserstein barycenter"""
 
 f, axes = plt.subplots(1, 3, figsize=(12, 4))
 coefs = coefs.reshape(width, width, -1)
