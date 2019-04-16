@@ -250,3 +250,28 @@ class MTW:
         self.params_grid_print = params_grid_print
 
         return [{"alpha": a, "beta": b} for a, b in params_grid]
+
+    def reset(self):
+        if hasattr(self, 'coefs_'):
+            del self.coefs_
+        if hasattr(self, 'coefs1_'):
+            del self.coefs1_
+        if hasattr(self, 'coefs2_'):
+            del self.coefs2_
+        if hasattr(self, 'residuals_'):
+            del self.residuals_
+        if hasattr(self, 'b_'):
+            del self.b_
+        if hasattr(self, 'marginals_'):
+            del self.marginals_
+        if hasattr(self, 'barycenter2_'):
+            del self.barycenter2_
+        if hasattr(self, 'barycenter1_'):
+            del self.barycenter1_
+        if hasattr(self, 'barycenter_'):
+            del self.barycenter_
+        if hasattr(self, 'log_'):
+            del self.log_
+            self.stable = False
+        self.t_ot = 0.
+        self.t_cd = 0.
