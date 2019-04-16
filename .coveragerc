@@ -6,7 +6,6 @@ source = mtw
 include = */mtw/*
 omit = */setup.py
        */mtw/examples_utils/*
-       */mtw/plot_utils.py
 
 [report]
 exclude_lines =

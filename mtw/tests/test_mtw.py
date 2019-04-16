@@ -1,8 +1,7 @@
-from mtw import utils
+from mtw.examples_utils import generate_dirac_images, gaussian_design
 import numpy as np
 from numpy.testing import assert_allclose
-from mtw.utils import groundmetric
-from mtw import MTW
+from mtw import MTW, utils
 
 
 def test_mtw_convolution():
@@ -25,26 +24,23 @@ def test_mtw_convolution():
     # ot params
     epsilon = 1. / n_features
     stable = False
-    gamma = 10
     Mbig = utils.groundmetric2d(n_features, p=2, normed=False)
     m = np.median(Mbig)
-    M = groundmetric(width, p=2, normed=False)
+    M = utils.groundmetric(width, p=2, normed=False)
     M /= m
     # M = Mbig / m
 
     # Generate Coefs
-    coefs = utils.generate_dirac_images(width, n_tasks, nnz=nnz,
-                                        seed=seed, overlap=overlap,
-                                        binary=binary)
+    coefs = generate_dirac_images(width, n_tasks, nnz=nnz,
+                                  seed=seed, overlap=overlap,
+                                  binary=binary)
     coefs_flat = coefs.reshape(-1, n_tasks)
     # # Generate X, Y data
     std = 1 / snr
-    X, Y = utils.gaussian_design(n_samples, coefs_flat,
-                                 corr=corr,
-                                 sigma=std,
-                                 denoising=denoising,
-                                 scaled=True,
-                                 seed=seed)
+    X, Y = gaussian_design(n_samples, coefs_flat,
+                           corr=corr, sigma=std,
+                           denoising=denoising,
+                           scaled=True, seed=seed)
 
     betamax = np.array([abs(x.T.dot(y)) for x, y in zip(X, Y)]).max()
     beta_fr = 0.3
@@ -54,8 +50,9 @@ def test_mtw_convolution():
     callback_options = {'callback': True,
                         'x_real': coefs_flat.reshape(- 1, n_tasks),
                         'verbose': True, 'rate': 1, 'prc_only': False}
+    gamma = utils.compute_gamma(0.9, M)
 
-    # mtw_model using convolutions to compute OT barycenters
+    """Fit mtw_model using convolutions to compute OT barycenters."""
     mtw_model = MTW(M=M, alpha=alpha, beta=beta, epsilon=epsilon,
                     gamma=gamma, stable=stable, tol_ot=1e-8, tol=1e-5,
                     maxiter_ot=200, maxiter=5000, **callback_options,
