@@ -96,8 +96,9 @@ for i_fold, (train, test) in enumerate(cv.split(Xcv[0], ycv[0])):
     for i_param, params in enumerate(params_grid):
         mtw.set_params(params)
         mtw.fit(Xcv[:, train], ycv[:, train])
-        scores[i_fold, i_param, :] = mtw.score(Xcv[:, test],
-                                               ycv[:, test])
+        scores[i_fold, i_param, :] = mtw.cv_score(Xcv[:, test],
+                                                  ycv[:, test],
+                                                  classification=True)
     mtw.reset()
 
     mean_scores = np.mean(scores, axis=0)  # n_params x n_tasks
