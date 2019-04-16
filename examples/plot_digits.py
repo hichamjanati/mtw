@@ -9,6 +9,8 @@ can be used to reproduce the results of (Janati et al., Aistats'19).
 """
 
 import numpy as np
+import os
+from download import download
 from sklearn.model_selection import check_cv
 
 import matplotlib.pyplot as plt
@@ -30,10 +32,13 @@ n_tasks = len(tasks)
 mtgl_only = False
 positive = False
 
-# Fetch data. The images 'X' are grouped and sorted. Generate true
-# labels 'Y' accordingly
-
-Xraw = np.loadtxt("data/digits.txt")
+"""Download data. The images 'X' are grouped and sorted. Generate true
+labels 'Y' accordingly."""
+if not os.path.exists('./data'):
+    os.mkdir('./data')
+url = "http://archive.ics.uci.edu/ml/machine-learning-databases/mfeat/mfeat-pix"
+path = download(url, ".data/digits.txt")
+Xraw = np.loadtxt(".data/digits.txt")
 Xraw = Xraw.reshape(10, 200, 240)
 yraw = np.zeros((10, 2000))
 for k in range(10):
