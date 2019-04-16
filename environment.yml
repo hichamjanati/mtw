@@ -12,3 +12,4 @@ dependencies:
     - scikit-learn>=0.20.1
     - nose
     - pytest
+    - download
