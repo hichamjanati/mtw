@@ -74,8 +74,8 @@ plot_gallery = True
 master_doc = 'index'
 
 # General information about the project.
-project = u'mne-template'
-copyright = u'2016, Vighnesh Birodkar'
+project = u'Multi-task Wasserstein'
+copyright = u'2019, Hicham Janati'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
