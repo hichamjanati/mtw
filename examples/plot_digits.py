@@ -25,9 +25,11 @@ seed = 42
 rnd = np.random.RandomState(seed)
 
 # set n_samples
-n_samples = 20
+n_samples = 10
 n_features = 240
-tasks = [0, 1, 2, 3, 4, 5]
+
+# take only 3 tasks to run example fast
+tasks = [0, 1, 2]
 n_tasks = len(tasks)
 mtgl_only = False
 positive = False
@@ -49,7 +51,7 @@ yraw = yraw.reshape(10, 10, 200)
 # learner and split it into a cv and validation set
 # Here the design matrix X is the same for all tasks
 
-samples = np.arange(200)
+samples = np.arange(50)
 samples = rnd.permutation(samples)[:n_samples]
 mask_valid = np.ones(200).astype(bool)
 mask_valid[samples] = False
@@ -85,8 +87,9 @@ mtw = MTW(M=M_, epsilon=epsilon, gamma=gamma, positive=positive,
           tol_cd=1e-4, maxiter=1000)
 params_grid = mtw.get_params_grid(Xcv, ycv)
 
-# do 5 folds cross validation based on classification error
-cv = 5
+# do 2 folds cross validation based on classification error
+
+cv = 2
 cv = check_cv(cv=cv)
 
 scores = np.empty((cv.n_splits, len(params_grid), n_tasks))
