@@ -94,18 +94,10 @@ def wklobjective_converged(qsum, f0, plansum, epsilon, gamma):
     return obj
 
 
-def compute_gamma(tau, M, p=None, q=None):
+def compute_gamma(tau, M):
     """Compute the sufficient KL weight for a full mass minimum."""
     xp = get_module(M)
-
-    if p is None or q is None:
-        return max(0., - M.max() / (2 * xp.log(tau)))
-
-    geomass = p.sum() * q.sum()
-    gamma = p.dot(M.dot(q)) / geomass
-    gamma /= 1 - tau ** 2
-
-    return max(0., gamma)
+    return max(0., - M.max() / (2 * xp.log(tau)))
 
 
 def logsumexp(a, axis=None):
@@ -129,14 +121,6 @@ def logsumexp(a, axis=None):
     out += a_max
     free_gpu_memory(xp)
     return out
-
-
-def kls1d(img, C):
-    """Compute log separable kernal application."""
-    xp = get_module(C)
-    x = logsumexp(C[xp.newaxis, :, :] + img[:, xp.newaxis, :], axis=-1)
-    x = logsumexp(C.T[:, :, xp.newaxis] + x[:, xp.newaxis, :], axis=0)
-    return x
 
 
 # for lists, vectorized:
@@ -164,24 +148,12 @@ def klconv1d_list(imgs, K):
     return convs
 
 
-@jit(float64(float64[::1, :]), nopython=True, cache=True)
-def l1norm(theta):
-    """Compute L1 norm."""
-    n_features, n_tasks = theta.shape
-    out = 0.
-    for j in range(n_features):
-        for t in range(n_tasks):
-            out += abs(theta[j, t])
-    return out
-
-
 @jit(float64[:, :](float64[:, :, :], float64[::1, :],
                    float64[:, :]),
      nopython=True, cache=True)
 def residual(X, theta, y):
     """Compute X dot theta."""
-    n_features, n_tasks = theta.shape
-    n_samples = X[0].shape[0]
+    n_tasks, n_samples, n_features = X.shape
     R = np.zeros((n_tasks, n_samples))
     for t in range(n_tasks):
         R[t] = y[t] - X[t].dot(theta[:, t])
