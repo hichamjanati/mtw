@@ -148,9 +148,6 @@ def klconv1d_list(imgs, K):
     return convs
 
 
-@jit(float64[:, :](float64[:, :, :], float64[::1, :],
-                   float64[:, :]),
-     nopython=True, cache=True)
 def residual(X, theta, y):
     """Compute X dot theta."""
     n_tasks, n_samples, n_features = X.shape
