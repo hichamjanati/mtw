@@ -61,4 +61,4 @@ doc:
 	make -C doc html-noplot
 
 test-manifest:
-	check-manifest --ignore doc,mtw/*/tests,.circleci/config.yml,*.c;
+	check-manifest --ignore doc,mtw/*/tests,.circleci*,*.c;
