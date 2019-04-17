@@ -20,7 +20,7 @@ except ImportError:
 def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
            stable=False, maxiter=2000, callback=None, tol=1e-5,
            maxiter_ot=10000, tol_ot=1e-4, positive=False, n_jobs=1,
-           tol_cd=1e-4, gpu=True):
+           tol_cd=1e-4, gpu=True, verbose=True):
     """Perform Alternating Optimization of concomittant MTW."""
 
     log = {'loss': [], 'dloss': [], 'log_sinkhorn1': [], 'log_sinkhorn2': [],
@@ -149,7 +149,6 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
                     warnings.warn("""Nan found in positive, re-fit in
                                      log-domain.""")
                     b1 = xp.log(b1 + 1e-100, out=b1)
-                    print("\n\nAFTER LOG:")
                     stable = True
                     update_ot_1 = set_ot_func(True, ot_img)
                     fot1, log_ot1, marginals1, b1, q1 = \
@@ -199,7 +198,8 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
               "\n"
               "You may want to increase mtw.maxiter.")
 
-    print("Time ot %.1f | Time cd %.1f" % (t_ot, sum(t_cd)))
+    if verbose:
+        print("Time ot %.1f | Time cd %.1f" % (t_ot, sum(t_cd)))
 
     log['stable'] = stable
     log['t_cd'] = sum(t_cd)

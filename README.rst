@@ -60,11 +60,18 @@ and (n_tasks, n_samples)
 .. code:: python
 
    >>> from mtw import MTW
-   >>> epsilon = 1 / len(M)
+   >>> n_tasks, n_samples, n_features = 2, 10, 50
+   >>> # Compute M as Euclidean distances matrix if not given
+   >>> grid = np.arange(n_features)
+   >>> M = (grid[:, None] - grid[None, :]) ** 2
+   >>> # Some data X and y
+   >>> X = np.random.randn(n_tasks, n_samples, n_features)
+   >>> y = np.random.randn(n_tasks, n_samples)
+   >>> epsilon = 1. / n_features
    >>> alpha = 0.1
    >>> beta = 0.1
-   >>> mtw = MTW(alpha=alpha, beta=beta, M=M, epsilon=eps)
-   >>> mtw.fit(X, y)
+   >>> mtw = MTW(alpha=alpha, beta=beta, M=M, epsilon=epsilon)
+   >>> mtw = mtw.fit(X, y)
    >>> coefs = mtw.coefs_
 
 See ./examples for more.

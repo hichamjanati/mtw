@@ -98,7 +98,7 @@ class MTW:
         if self.callback:
             self.callback_f = inspector_mtw(**self.callback_kwargs)
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, verbose=True):
         """Launch MTW solver.
 
         Parameters
@@ -121,7 +121,8 @@ class MTW:
                    stable=self.stable, tol=self.tol, callback=self.callback_f,
                    maxiter=self.maxiter, tol_ot=self.tol_ot,
                    maxiter_ot=self.maxiter_ot, positive=self.positive,
-                   n_jobs=self.n_jobs, tol_cd=self.tol_cd, gpu=self.gpu)
+                   n_jobs=self.n_jobs, tol_cd=self.tol_cd, gpu=self.gpu,
+                   verbose=verbose)
         self.coefs1_ = coefs1.copy()
         self.coefs2_ = coefs2.copy()
         self.coefs_ = coefs1 - coefs2
