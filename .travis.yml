@@ -37,7 +37,7 @@ install:
   - pip install -e .
 
 script:
-  - pytest -v --cov=mtw --pyargs mtw
+  - pytest -lv --cov-report term-missing mtw --cov=mtw --cov-config .coveragerc
   - make
   - flake8 --count mtw
 after_success:
