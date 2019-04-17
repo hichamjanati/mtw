@@ -38,7 +38,8 @@ install:
 
 script:
   - pytest -v --cov=mtw --pyargs mtw
-
+  - make
+  - flake8 --count mtw
 after_success:
   - cp .coverage $TRAVIS_BUILD_DIR
   - codecov --root $TRAVIS_BUILD_DIR || echo "codecov upload failed"
