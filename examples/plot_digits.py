@@ -40,7 +40,7 @@ if not os.path.exists('./data'):
     os.mkdir('./data')
 url = "http://archive.ics.uci.edu/ml/machine-learning-databases/"
 url += "mfeat/mfeat-pix"
-path = download(url, ".data/digits.txt", replace=False)
+path = download(url, ".data/digits.txt", replace=True)
 Xraw = np.loadtxt(".data/digits.txt")
 Xraw = Xraw.reshape(10, 200, 240)
 yraw = np.zeros((10, 2000))
@@ -87,14 +87,14 @@ M_ /= np.median(M_)
 epsilon = 10. / n_features
 betamax = np.array([x.T.dot(y) for x, y in zip(Xcv, ycv)]).max() / n_samples
 alpha = 50. / n_samples
-beta = 0.05 * betamax
+beta = 0.075 * betamax
 gamma = utils.compute_gamma(0.8, M)
 mtw = MTW(M=M_, alpha=alpha, beta=beta, epsilon=epsilon, gamma=gamma,
           positive=positive, stable=False, tol_ot=1e-5, maxiter_ot=15,
           tol=1e-4, tol_cd=1e-4, maxiter=1000)
 
 mtw.fit(Xcv, ycv)
-coefs_ = mtw.coefs_
+coefs_ = mtw.coefs_.copy()
 ypred = np.argmax(Xvalid.dot(coefs_), axis=1)
 errors = (ypred != yvalid).reshape(n_tasks, -1).mean(axis=1)
 
@@ -102,17 +102,19 @@ print(f"Classification error for predicting digits {tasks}:")
 print(errors)
 
 ###############################################################################
-# Imshoe coefficients
+# Imshow coefficients
 
-largecoef = np.zeros((24, 24, n_tasks))
+largecoef = np.zeros((n_tasks, 24, 24))
+coefs_ = mtw.coefs_.copy()
 coefs_ /= coefs_.max(axis=0)[None, :]
 coefs_ = np.clip(coefs_, 0, None)
-c = coefs_.reshape(16, 15, -1)
-largecoef[4:20][:, 4:19] = c
-c = np.swapaxes(largecoef, 2, 1).reshape(24, -1)
+c = coefs_.reshape(16, 15, n_tasks)
+c = np.swapaxes(c, 0, 2)
+largecoef[:, 4:19][:, :, 4:20] = c
 
-plt.figure(figsize=(30, n_tasks))
-plt.imshow(np.log(c + 0.1), cmap="hot")
-plt.xticks([])
-plt.yticks([])
+f, axes = plt.subplots(1, n_tasks)
+for ax, coef in zip(axes.T, largecoef):
+    ax.imshow(np.log(coef.T + 0.1), cmap="hot")
+    ax.set_xticks([])
+    ax.set_yticks([])
 plt.show()
