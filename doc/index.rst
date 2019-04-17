@@ -79,10 +79,9 @@ If you use this code, please cite:
 
 ArXiv link: https://arxiv.org/abs/1805.07833
 
-.. |eq1| image:: https://latex.codecogs.com/gif.latex?\min_{\substack{\theta^1,&space;\dots,&space;\theta^T&space;\\&space;\bar{\theta}&space;\in&space;\mathbb{R}^p}&space;}&space;\frac{1}{2n}&space;\sum_{t=1}^T{\|&space;X^t&space;\theta^t&space;-&space;Y^t&space;\|^2}&space;&plus;&space;H(\theta^1,&space;\dots,&space;\theta^T;&space;\bar{\theta})
-.. |eq2| image:: https://latex.codecogs.com/gif.latex?H(\theta^1,&space;\dots,&space;\theta^T;&space;\bar{\theta})&space;=&space;\frac{\mu}{T}&space;\overbrace{&space;\sum_{t=1}^{T}&space;\widetilde{W}(\theta^t,&space;\bar{\theta})}^{&space;\text{supports&space;proximity}}&space;&plus;&space;\frac{\lambda}{T}&space;\overbrace{&space;\sum_{t=1}^T&space;\|\theta^t\|_1}^{\text{sparsity}},
-.. |eq3| image:: https://latex.codecogs.com/gif.latex?\widetilde{W}(\theta^t,&space;\bar{\theta})&space;=&space;W(\theta_&plus;^t,&space;\bar{\theta}_&plus;)&space;&plus;&space;W(\theta_-^t,&space;\bar{\theta}_-)
-
+.. |eq1| image:: .images/eq1.gif
+.. |eq2| image:: .images/eq2.gif
+.. |eq3| image:: .images/eq3.gif
 
 .. toctree::
    :maxdepth: 2
