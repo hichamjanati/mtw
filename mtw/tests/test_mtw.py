@@ -7,7 +7,7 @@ from itertools import product
 
 
 @pytest.mark.parametrize("positive, alpha, epsilon",
-                         product([False, True], [10., 0.], [5., 0.75]))
+                         product([False, True], [10., 0.], [5., 0.5]))
 def test_mtw_convolution(positive, alpha, epsilon):
 
     # Estimator params

@@ -40,8 +40,9 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
     theta = theta1 - theta2
 
     thetaold = theta.copy()
-    Ls = lipschitz_numba(Xf)
+    Ls = lipschitz_numba(X)
     Ls[Ls == 0.] = Ls[Ls != 0].min()
+    Ls = np.asfortranarray(Ls)
 
     ot_img = True
     if len(M) == n_features:
@@ -235,18 +236,10 @@ def set_ot_func(stable, ot_img):
     return update_ot
 
 
-@jit(float64[::1, :](float64[::1, :, :]), nopython=True, cache=True)
 def lipschitz_numba(X):
     """Compute lipschitz constants."""
     T, n, p = X.shape
-    L = np.zeros((T, p))
-    L = np.asfortranarray(L)
-    for k in range(T):
-        for j in range(p):
-            li = 0.
-            for i in range(n):
-                li = li + X[k, i, j] ** 2
-            L[k, j] = li
+    L = (X ** 2).sum(axis=1)
     return L
 
 
