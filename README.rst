@@ -14,7 +14,7 @@
 .. _CircleCI: https://circleci.com/gh/hichamjanati/mtw/tree/master
 
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/mtw/badge/?version=latest
-.. _ReadTheDocs: https://mtw.readthedocs.io/en/latest/?badge=latest
+.. _ReadTheDocs: https://mtw.readthedocs.io/en/latest/
 
 Multi-task Wasserstein (mtw)
 ============================
