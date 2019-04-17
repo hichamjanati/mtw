@@ -1,6 +1,5 @@
 import numpy as np
 
-from numba import (jit, float64)
 
 try:
     import cupy as cp

@@ -2,7 +2,6 @@
 import numpy as np
 import warnings
 from joblib import Parallel, delayed
-from numba import jit, float64
 from time import time
 
 from . import utils
