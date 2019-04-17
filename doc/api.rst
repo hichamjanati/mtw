@@ -1,15 +1,17 @@
-#######
-MTW API
-#######
+.. _api_documentation:
 
+=================
+API Documentation
+=================
 
 .. currentmodule:: mtw
 
 MTW
-===
+=====
+
+Estimators
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
 
-   mtw
+   MTW
