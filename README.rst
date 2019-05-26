@@ -93,7 +93,8 @@ following example sets this lower bound to 1% of the initial std estimation
     >>> grid = np.arange(n_features)
     >>> M = (grid[:, None] - grid[None, :]) ** 2
     >>> # Some data X and y
-    >>> X, y = np.random.randn(2, n_tasks, n_samples, n_features)
+    >>> X = np.random.randn(n_tasks, n_samples, n_features)
+    >>> y = np.random.randn(n_tasks, n_samples)
     >>> epsilon = 1. / n_features
     >>> alpha = 0.1
     >>> beta = 0.1
