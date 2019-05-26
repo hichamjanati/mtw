@@ -16,6 +16,11 @@
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/mtw/badge/?version=latest
 .. _ReadTheDocs: https://mtw.readthedocs.io/en/latest/
 
+
+Documentation
+=============
+Detailed examples can be found [here](https://mtw.readthedocs.io).
+
 Multi-task Wasserstein (mtw)
 ============================
 
@@ -96,7 +101,7 @@ following example sets this lower bound to 1% of the initial std estimation
     >>> mtw = MTW(alpha=alpha, beta=beta, M=M, epsilon=epsilon, sigma0=sigma0)
 
 
-See ./examples for more.
+See [the Documentation](https://mtw.readthedocs.io) for details.
 
 
 Dependencies

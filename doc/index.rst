@@ -63,6 +63,26 @@ and (n_tasks, n_samples)
 >>> coefs = mtw.coefs_
 
 
+A concomittant version where the standard deviation of each task is inferred.
+The lower bound on sigma can be set via the `sigma0` parameter of MTW. The
+following example sets this lower bound to 1% of the initial std estimation
+`np.std(Y)`.
+
+.. code:: python
+
+    >>> from mtw import MTW
+    >>> n_tasks, n_samples, n_features = 2, 10, 50
+    >>> grid = np.arange(n_features)
+    >>> M = (grid[:, None] - grid[None, :]) ** 2
+    >>> # Some data X and y
+    >>> X, y = np.random.randn(2, n_tasks, n_samples, n_features)
+    >>> epsilon = 1. / n_features
+    >>> alpha = 0.1
+    >>> beta = 0.1
+    >>> sigma0 = 0.01
+    >>> mtw = MTW(alpha=alpha, beta=beta, M=M, epsilon=epsilon, sigma0=sigma0)
+
+
 See ./examples for more.
 
 Dependencies
