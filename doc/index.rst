@@ -76,7 +76,6 @@ Cite
 If you use this code, please cite:
 
 ::
-
     @InProceedings{janati19a,
     author={Hicham Janati and Marco Cuturi and Alexandre Gramfort},
     title={Wasserstein regularization for sparse multi-task regression},
@@ -87,8 +86,19 @@ If you use this code, please cite:
     month = 	 {16--19 Apr},
     publisher = 	 {PMLR},
     }
-
 ArXiv link: https://arxiv.org/abs/1805.07833
+
+If you use the concomittant (MWE) version of MTW, please cite:
+::
+    @InProceedings{janati19b,
+    author={Hicham Janati and Thomas Bazeille and Bertrand Thirion and Marco Cuturi and Alexandre Gramfort},
+    title={Group level M-EEG source imaging via Optimal transport: Minimum Wasserstein Estimates},
+    booktitle = {Proceedings of the Fifty-th Conference on Information Processing and Medical Imaging},
+    year = 	 {2019},
+    month = 	 {02--07 June},
+    publisher = 	 {Springer},
+    }
+
 
 .. |eq1| image:: .images/eq1.gif
 .. |eq2| image:: .images/eq2.gif
@@ -112,9 +122,9 @@ ArXiv link: https://arxiv.org/abs/1805.07833
 `API Documentation <api.html>`_
 -------------------------------
 
-An example of API documentation.
+`API Documentation <api.html>`_
 
 `Examples <auto_examples/index.html>`_
 --------------------------------------
 
-A set of examples. It complements the `User Guide <user_guide.html>`_.
+A set of examples: `User Guide <auto_examples/index.html>`_.
