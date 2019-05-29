@@ -95,7 +95,6 @@ Cite
 ====
 
 If you use this code, please cite:
-
 ::
     @InProceedings{janati19a,
     author={Hicham Janati and Marco Cuturi and Alexandre Gramfort},
@@ -107,6 +106,8 @@ If you use this code, please cite:
     month = 	 {16--19 Apr},
     publisher = 	 {PMLR},
     }
+
+
 ArXiv link: https://arxiv.org/abs/1805.07833
 
 If you use the concomittant (MWE) version of MTW, please cite:
