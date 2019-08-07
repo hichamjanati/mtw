@@ -32,16 +32,16 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
     marginals1 = np.ones((n_tasks, n_features)) / n_features
     marginals2 = np.ones((n_tasks, n_features)) / n_features
 
-    Xf = np.asfortranarray(X)
-    Yf = np.asfortranarray(Y)
+    Xf = [np.asfortranarray(X[k]) for k in range(n_tasks)]
+    mXf = [- np.asfortranarray(X[k]) for k in range(n_tasks)]
+
     theta1 = coefs01.copy()
     theta2 = coefs02.copy()
     theta = theta1 - theta2
 
     thetaold = theta.copy()
-    Ls = lipschitz_numba(X)
+    Ls = (X ** 2).sum(axis=1)
     Ls[Ls == 0.] = Ls[Ls != 0].min()
-    Ls = np.asfortranarray(Ls)
 
     ot_img = True
     if len(M) == n_features:
@@ -64,7 +64,7 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
         thetabar2 *= 0.
         theta = theta1.copy()
     n_tasks = len(X)
-    a = n_samples * alpha * gamma / n_tasks
+    a = n_samples * alpha * gamma
     b = n_samples * beta
     if alpha == 0.:
         theta1 *= 0.
@@ -76,9 +76,8 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
     with Parallel(n_jobs=n_jobs, backend="threading") as pll:
         if alpha == 0.:
             t = time()
-            R = Y.copy()
             theta1 = np.asfortranarray(theta1)
-            theta, R, sigmas = update_coefs(pll, X, Y, Ls, marginals1,
+            theta, R, sigmas = update_coefs(pll, Xf, Y, Ls, marginals1,
                                             sigmas,
                                             a, b,
                                             sigma0,
@@ -101,11 +100,10 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
         for i in range(maxiter):
             t0 = time()
             if not positive:
-                theta2f = np.asfortranarray(theta2)
-                Y1 = utils.residual(Xf, - theta2f, Yf)
+                Y1 = utils.residual(X, - theta2, Y)
             else:
-                Y1 = Yf
-            theta1, R, sigmas = update_coefs(pll, Xf, Y1, Ls, marginals1,
+                Y1 = Y
+            theta1, R, sigmas = update_coefs(pll, X, Y1, Ls, marginals1,
                                              sigmas,
                                              a, b,
                                              sigma0,
@@ -113,9 +111,8 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
                                              R=R,
                                              tol=tol_cd, maxiter=10000)
             if not positive:
-                theta1f = np.asfortranarray(theta1)
-                Y2 = utils.residual(Xf, theta1f, Yf)
-                theta2, R, sigmas, = update_coefs(pll, - Xf, Y2, Ls,
+                Y2 = utils.residual(X, theta1, Y)
+                theta2, R, sigmas, = update_coefs(pll, mXf, Y2, Ls,
                                                   marginals2,
                                                   sigmas,
                                                   a, b,
@@ -129,7 +126,7 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
                 theta = theta1.copy()
 
             obj = 0.5 * (R ** 2).sum(axis=1).dot(1 / sigmas) / n_samples
-            obj += beta * abs(theta).sum() + 0.5 * sigmas.sum()
+            obj += beta * (theta1 + theta2).sum() + 0.5 * sigmas.sum()
             log["objcd"].append(obj)
             tc = time() - t0
             t_cd.append(tc)
@@ -140,47 +137,48 @@ def solver(X, Y, M, alpha=1., beta=0., epsilon=0.01, gamma=1., sigma0=0.,
 
             t1 = time()
             if alpha:
-                fot1, log_ot1, marginals1, b1, q1 = \
-                    update_ot_1(theta1 + 1e-100, M, epsilon, gamma,
-                                b=b1, tol=tol_ot, maxiter=maxiter_ot)
-                utils.free_gpu_memory(xp)
-
-                if fot1 is None or not theta1.max(0).all():
-                    warnings.warn("""Nan found in positive, re-fit in
-                                     log-domain.""")
-                    b1 = xp.log(b1 + 1e-100, out=b1)
-                    stable = True
-                    update_ot_1 = set_ot_func(True, ot_img)
+                if (theta1 > 1e-10).any(0).all():
                     fot1, log_ot1, marginals1, b1, q1 = \
-                        update_ot_1(theta1, M, epsilon, gamma, b=b1,
-                                    tol=tol_ot, maxiter=maxiter_ot)
-                    utils.free_gpu_memory(xp)
-
-                log["log_sinkhorn1"].append(log_ot1)
-                thetabar1 = q1
-                log["fot1"].append(fot1)
-                obj += alpha * fot1 / n_tasks
-                if not positive:
-                    fot2, log_ot2, marginals2, b2, q2 = \
-                        update_ot_2(theta2 + 1e-100, M, epsilon, gamma,
-                                    b=b2, tol=tol_ot, maxiter=maxiter_ot)
-                    utils.free_gpu_memory(xp)
-
-                    if fot2 is None or not theta2.max(0).all():
-                        warnings.warn("""Nan found in negative, re-fit in
-                                         log-domain.""")
-                        b2 = xp.log(b2 + 1e-100, out=b2)
+                        update_ot_1(theta1, M, epsilon, gamma,
+                                    b=b1, tol=tol_ot, maxiter=maxiter_ot)
+                    if fot1 is None or not theta1.max(0).all():
+                        warnings.warn("""Nan found when computing barycenter,
+                                         re-fit in log-domain.""")
+                        b1 = xp.log(b1 + 1e-100, out=b1)
                         stable = True
-                        update_ot_2 = set_ot_func(True, ot_img)
+                        update_ot_1 = set_ot_func(True, ot_img)
+                        fot1, log_ot1, marginals1, b1, q1 = \
+                            update_ot_1(theta1, M, epsilon, gamma, b=b1,
+                                        tol=tol_ot, maxiter=maxiter_ot)
+                        utils.free_gpu_memory(xp)
+
+                    log["log_sinkhorn1"].append(log_ot1)
+                    thetabar1 = q1
+                    log["fot1"].append(fot1)
+                    obj += alpha * fot1
+                if not positive:
+                    if (theta2 > 1e-10).any(0).all():
                         fot2, log_ot2, marginals2, b2, q2 = \
                             update_ot_2(theta2, M, epsilon, gamma,
                                         b=b2, tol=tol_ot, maxiter=maxiter_ot)
                         utils.free_gpu_memory(xp)
 
-                    log["log_sinkhorn2"].append(log_ot2)
-                    thetabar2 = q2
-                    log["fot2"].append(fot2)
-                    obj += alpha * fot2 / n_tasks
+                        if fot2 is None or not theta2.max(0).all():
+                            warnings.warn("""Nan found in negative, re-fit in
+                                             log-domain.""")
+                            b2 = xp.log(b2 + 1e-100, out=b2)
+                            stable = True
+                            update_ot_2 = set_ot_func(True, ot_img)
+                            fot2, log_ot2, marginals2, b2, q2 = \
+                                update_ot_2(theta2, M, epsilon, gamma,
+                                            b=b2, tol=tol_ot,
+                                            maxiter=maxiter_ot)
+                            utils.free_gpu_memory(xp)
+
+                        log["log_sinkhorn2"].append(log_ot2)
+                        thetabar2 = q2
+                        log["fot2"].append(fot2)
+                        obj += alpha * fot2
 
             t_ot += time() - t1
             if callback:
@@ -235,24 +233,17 @@ def set_ot_func(stable, ot_img):
     return update_ot
 
 
-def lipschitz_numba(X):
-    """Compute lipschitz constants."""
-    T, n, p = X.shape
-    L = (X ** 2).sum(axis=1)
-    return L
-
-
 def update_coefs(pll, X, y, Ls, marginals, sigmas, a, b, sigma0,
                  coefs0=None, R=None, maxiter=20000, tol=1e-4,
                  positive=False):
     """BCD in numba."""
-    n_tasks, n_samples, n_features = X.shape
+    n_tasks, n_samples = y.shape
+    n_features = Ls.shape[1]
 
     if coefs0 is None:
         R = y.copy()
         coefs0 = np.zeros((n_features, n_tasks))
     elif R is None:
-        coefs0 = np.asfortranarray(coefs0)
         R = utils.residual(X, coefs0, y)
 
     dell = delayed(cython_wrapper)

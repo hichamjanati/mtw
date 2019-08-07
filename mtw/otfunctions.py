@@ -20,7 +20,7 @@ def barycenterkl_log(P, M, epsilon, gamma, b=None, tol=1e-4,
     n_tasks = P.shape[-1]
     n_features = M.shape[-1]
     psum = P.sum()
-    support = P.any(axis=1)
+    support = (P > 1e-8).any(axis=1)
     logps = np.log(P[support] + 1e-100)
     logps = xp.asarray(logps)
     M = M[xp.asarray(support)]
@@ -29,7 +29,6 @@ def barycenterkl_log(P, M, epsilon, gamma, b=None, tol=1e-4,
     if b is None:
         Kb = utils.logsumexp(M, axis=1)
         Kb = xp.tile(Kb, (n_tasks, 1)).T
-        utils.free_gpu_memory(xp)
 
     else:
         Kb = xp.zeros((len(M), n_tasks))
@@ -54,8 +53,9 @@ def barycenterkl_log(P, M, epsilon, gamma, b=None, tol=1e-4,
             Kb[:, k] = utils.logsumexp(b[:, k][None, :] + M, axis=1)
             utils.free_gpu_memory(xp)
         q = xp.exp(logq)
-        cstr = float(abs(q - qold).max())
-        cstr /= float(max(q.max(), qold.max(), 1e-20))
+        if i % 5 == 0:
+            cstr = float(abs(q - qold).max())
+            cstr /= float(max(q.max(), qold.max(), 1.))
         qold = q.copy()
         log["cstr"].append(cstr)
         # uncomment to compute exact loss
@@ -65,7 +65,7 @@ def barycenterkl_log(P, M, epsilon, gamma, b=None, tol=1e-4,
         # f += (((gamma + epsilon) * a + gamma * (Kb - logps)) *
         # marginals.T).sum()
         # log["obj"].append(f)
-        if cstr < tol and i > 5:
+        if cstr < tol and i > 3:
             break
         # f = utils.wklobjective_log(a, Kb, P, q, K0, epsilon, gamma)
         # log["obj"].append(f)
@@ -111,7 +111,7 @@ def barycenterkl(P, M, epsilon, gamma, b=None, tol=1e-4,
     psum = P.sum()
     n_features, n_tasks = P.shape
     frac = gamma / (gamma + epsilon)
-    support = (P > 1e-20).any(axis=1)
+    support = (P > 1e-8).any(axis=1)
     if len(support) == 0:
         support = P.any(axis=1)
     P = P[support]
@@ -138,8 +138,8 @@ def barycenterkl(P, M, epsilon, gamma, b=None, tol=1e-4,
         q = q ** (1 / (1 - frac))
         Q = q[:, None]
         utils.free_gpu_memory(xp)
-
-        cstr = float(abs(q - qold).max() / max(q.max(), qold.max(), 1e-10))
+        if i % 5 == 0:
+            cstr = float(abs(q - qold).max() / max(q.max(), qold.max(), 1.))
         qold = q.copy()
         b_old = b.copy()
         b = (Q / Ka) ** frac
@@ -150,7 +150,7 @@ def barycenterkl(P, M, epsilon, gamma, b=None, tol=1e-4,
             break
         Kb = M.dot(b)
         log["cstr"].append(cstr)
-        if abs(cstr) < tol and i > 5:
+        if abs(cstr) < tol and i > 3:
             break
         # marginals = (a * Kb).T
         utils.free_gpu_memory(xp)
@@ -227,7 +227,7 @@ def barycenterkl_img_log(P, M, epsilon, gamma, b=None, tol=1e-4,
 
         if i % 10 == 0:
             cstr = float((abs(q - qold)).max())
-            cstr /= float(max(q.max(), qold.max(), 1e-20))
+            cstr /= float(max(q.max(), qold.max(), 1.))
         qold = q.copy()
 
         log["cstr"].append(cstr)
@@ -293,7 +293,7 @@ def barycenterkl_img(P, M, epsilon, gamma, b=None, tol=1e-4,
 
         if i % 10 == 0:
             cstr = float((abs(margs - margs_old)).max())
-            cstr /= float(max(margs.max(), margs_old.max(), 1e-20))
+            cstr /= float(max(margs.max(), margs_old.max(), 1.))
         margs_old = margs.copy()
 
         log["cstr"].append(cstr)

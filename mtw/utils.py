@@ -149,8 +149,5 @@ def klconv1d_list(imgs, K):
 
 def residual(X, theta, y):
     """Compute X dot theta."""
-    n_tasks, n_samples, n_features = X.shape
-    R = np.zeros((n_tasks, n_samples))
-    for t in range(n_tasks):
-        R[t] = y[t] - X[t].dot(theta[:, t])
+    R = y - np.array([x.dot(th) for x, th in zip(X, theta.T)])
     return R
